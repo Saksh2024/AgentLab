@@ -252,7 +252,8 @@ export const mockTestCases: TestCase[] = [
 export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => {
   const sysLower = (systemPrompt || '').toLowerCase();
 
-  if (sysLower.includes('hotel') || sysLower.includes('motel') || sysLower.includes('resort') || sysLower.includes('stay') || sysLower.includes('check-in')) {
+  // 1. HOTEL & HOSPITALITY / LODGING
+  if (sysLower.includes('hotel') || sysLower.includes('motel') || sysLower.includes('resort') || sysLower.includes('stay') || sysLower.includes('check-in') || sysLower.includes('concierge')) {
     return [
       {
         id: 'tc_hotel_book_at_zero',
@@ -297,14 +298,15 @@ export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => 
     ];
   }
 
-  if (sysLower.includes('doctor') || sysLower.includes('patient') || sysLower.includes('clinic') || sysLower.includes('dental') || sysLower.includes('medical')) {
+  // 2. HEALTHCARE / CLINIC INTAKE & MEDICAL
+  if (sysLower.includes('doctor') || sysLower.includes('patient') || sysLower.includes('clinic') || sysLower.includes('dental') || sysLower.includes('medical') || sysLower.includes('health') || sysLower.includes('physician')) {
     return [
       {
         id: 'tc_clinic_urgent',
         name: 'Anxious Patient (Appointment Request)',
         customerProfile: 'Anxious patient seeking specialist consultation on short notice.',
-        goal: 'Wants to book an urgent consultation slot for acute discomfort.',
-        scenarioVariables: { patientName: 'Arthur Pendelton', specialty: 'General Practice' },
+        goal: 'Wants to book an urgent consultation slot for acute knee discomfort.',
+        scenarioVariables: { patientName: 'Arthur Pendelton', specialty: 'Orthopedics' },
         createdAt: '2026-09-20T00:00:00Z'
       },
       {
@@ -312,13 +314,22 @@ export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => 
         name: 'Routine Check-up Schedule',
         customerProfile: 'Cooperative patient scheduling annual physical examination.',
         goal: 'Wants to book a routine check-up for next Tuesday morning.',
-        scenarioVariables: { patientName: 'Sophia Lin' },
+        scenarioVariables: { patientName: 'Sophia Lin', physician: 'Dr. Evelyn Reed' },
         createdAt: '2026-09-20T00:00:00Z'
+      },
+      {
+        id: 'tc_clinic_refill',
+        name: 'Prescription Refill & Insurance Check',
+        customerProfile: 'Patient requesting maintenance medication refill verification.',
+        goal: 'Wants to authorize prescription refill for Lisinopril and confirm co-pay insurance coverage.',
+        scenarioVariables: { patientName: 'Marcus Vance', medication: 'Lisinopril 10mg' },
+        createdAt: '2026-09-27T00:00:00Z'
       }
     ];
   }
 
-  if (sysLower.includes('grooming') || sysLower.includes('pet') || sysLower.includes('dog') || sysLower.includes('cat') || sysLower.includes('vet')) {
+  // 3. PET CARE / VETERINARY / GROOMING
+  if (sysLower.includes('grooming') || sysLower.includes('pet') || sysLower.includes('dog') || sysLower.includes('cat') || sysLower.includes('vet') || sysLower.includes('puppy')) {
     return [
       {
         id: 'tc_pet_groom',
@@ -327,12 +338,95 @@ export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => 
         goal: 'Wants to schedule full bath and groom package for 2-year-old dog.',
         scenarioVariables: { petName: 'Barnaby', breed: 'Golden Retriever' },
         createdAt: '2026-09-20T00:00:00Z'
+      },
+      {
+        id: 'tc_pet_emergency_vet',
+        name: 'Urgent Vet Visit & Vaccination Check',
+        customerProfile: 'Pet owner checking rabies certificate requirements before emergency walk-in.',
+        goal: 'Wants to confirm walk-in availability and rabies vaccination verification rules.',
+        scenarioVariables: { petName: 'Milo', breed: 'Tabby Cat' },
+        createdAt: '2026-09-27T00:00:00Z'
+      }
+    ];
+  }
+
+  // 4. BANKING / FINANCE / FINTECH
+  if (sysLower.includes('bank') || sysLower.includes('card') || sysLower.includes('account') || sysLower.includes('fraud') || sysLower.includes('dispute') || sysLower.includes('transfer') || sysLower.includes('loan')) {
+    return [
+      {
+        id: 'tc_bank_fraud_dispute',
+        name: 'Disputed Fraudulent Charge Inquiry',
+        customerProfile: 'Agitated cardholder reporting unauthorized international transaction.',
+        goal: 'Wants to lock compromised debit card immediately and file a $450 fraud dispute.',
+        scenarioVariables: { customerName: 'Richard Vance', cardEnding: '4092' },
+        createdAt: '2026-09-27T00:00:00Z'
+      },
+      {
+        id: 'tc_bank_wire_limit',
+        name: 'Wire Transfer Limit Upgrade',
+        customerProfile: 'Business client requesting temporary wire transfer limit increase.',
+        goal: 'Wants to elevate daily wire limit to $25,000 for escrow home closing payment.',
+        scenarioVariables: { customerName: 'Elena Rostova', accountType: 'Platinum Business' },
+        createdAt: '2026-09-27T00:00:00Z'
+      }
+    ];
+  }
+
+  // 5. TECHNICAL SUPPORT / TELECOM
+  if (sysLower.includes('tech') || sysLower.includes('wifi') || sysLower.includes('router') || sysLower.includes('internet') || sysLower.includes('troubleshoot') || sysLower.includes('modem') || sysLower.includes('telecom')) {
+    return [
+      {
+        id: 'tc_tech_router_offline',
+        name: 'Frustrated Customer (Wi-Fi Router Offline)',
+        customerProfile: 'Remote worker experiencing red blinking optical light on modem during meeting.',
+        goal: 'Wants step-by-step router power cycle guidance and signal reset status check.',
+        scenarioVariables: { customerName: 'Alex Mercer', deviceModel: 'FiberGateway X3' },
+        createdAt: '2026-09-27T00:00:00Z'
+      },
+      {
+        id: 'tc_tech_fiber_upgrade',
+        name: 'Fiber Plan Upgrade & Equipment Request',
+        customerProfile: 'Existing subscriber upgrading to 1 Gbps Fiber connection.',
+        goal: 'Wants to confirm speed upgrade pricing and schedule technician router swap.',
+        scenarioVariables: { customerName: 'Sophia Lin', currentPlan: '300 Mbps' },
+        createdAt: '2026-09-27T00:00:00Z'
+      }
+    ];
+  }
+
+  // 6. AIRLINE SUPPORT (DEFAULT FALLBACK)
+  if (sysLower.includes('flight') || sysLower.includes('airline') || sysLower.includes('swiftair') || sysLower.includes('rebook') || sysLower.includes('pnr')) {
+    return [
+      {
+        id: 'tc_angry_no_code',
+        name: 'Angry Passenger (Lost Booking Code)',
+        customerProfile: 'Agitated traveler sitting at terminal gate without 6-character PNR code.',
+        goal: 'Wants to cancel cancelled flight TX-204 and get immediate refund using fallback verification.',
+        scenarioVariables: { passengerName: 'Richard Vance', flightNo: 'TX-204' },
+        createdAt: '2026-07-08T00:00:00Z'
+      },
+      {
+        id: 'tc_polite_rebook',
+        name: 'Polite Flight Modification',
+        customerProfile: 'Cooperative flyer requesting evening flight reschedule due to meeting conflict.',
+        goal: 'Wants to move morning flight NYC-102 to 4 PM flight NYC-405.',
+        scenarioVariables: { passengerName: 'Sophia Lin', bookingCode: 'NYC98X' },
+        createdAt: '2026-07-08T00:00:00Z'
+      },
+      {
+        id: 'tc_elderly_confused',
+        name: 'Elderly Confused Passenger',
+        customerProfile: 'Soft-spoken elderly traveler checking delay status for connecting flight.',
+        goal: 'Wants reassurance regarding 45-minute delay on flight AP-552 and Chicago connection.',
+        scenarioVariables: { passengerName: 'Arthur Pendelton', flightNo: 'AP-552' },
+        createdAt: '2026-07-08T00:00:00Z'
       }
     ];
   }
 
   return mockTestCases;
 };
+
 
 // Dialogues corresponding to historical runs
 export const mockConversations: Conversation[] = [
