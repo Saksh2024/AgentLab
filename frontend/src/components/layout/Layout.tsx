@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAppStore } from '../../store/useAppStore';
 import {
   LayoutDashboard,
   Terminal,
@@ -18,6 +19,11 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const profile = 'Senior Solutions Eng';
+  const { fetchVersions } = useAppStore();
+
+  useEffect(() => {
+    fetchVersions();
+  }, [fetchVersions]);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },

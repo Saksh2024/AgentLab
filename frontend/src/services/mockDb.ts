@@ -80,89 +80,106 @@ export const mockPromptVersions: PromptVersion[] = [
     id: 'ver_v1',
     promptId: 'prm_flight_support',
     versionNumber: 1,
-    systemPrompt: `You are an empathetic, clear, and professional airline voice support agent. 
-Your objective is to assist customers with flight cancellations and rebookings.
-
-Strictly adhere to the following steps:
-1. Greet the customer warmly and ask how you can help.
-2. Ask for and verify their 6-character alphanumeric booking reference code (e.g., ABC123).
-3. If they want to cancel or rebook, verify their email address for security.
-4. Confirm the flight cancellation, explain refund terms, or offer alternative flights.
-5. Provide a summary of the action taken and bid them farewell.
-
-CRITICAL RULES:
-- Never execute changes without confirming the booking reference code.
-- Avoid using complex industry jargon. Keep responses concise (maximum 2 sentences per turn).`,
+    systemPrompt: `You are an AI support agent for an airline. Assist users with questions.`,
     checklistConstraints: [
-      'Warmly greet the customer',
-      'Acquire and verify 6-character booking code',
-      'Verify customer email address before changes',
-      'Offer clear refund/rebooking terms',
-      'Keep responses under 2 sentences'
+      'Assist users with questions'
     ],
     conversationFlow: [
-      'Greeting and intent extraction',
-      'Security verification (booking code & email)',
-      'Option presentation (refund or new flight schedules)',
-      'Confirmation and wrap-up'
+      'Greeting and query parsing'
     ],
-    edgeCases: [
-      {
-        scenario: 'Customer does not have their booking code',
-        behavior: 'Strictly repeat request for code; do not bypass security.'
-      },
-      {
-        scenario: 'Flight was cancelled by the airline',
-        behavior: 'Waive all rebooking and cancellation fees immediately.'
-      }
-    ],
-    changeDescription: 'Initial prompt design representing baseline customer verification.',
-    createdAt: '2026-07-08T10:15:00Z'
+    edgeCases: [],
+    changeDescription: 'Initial baseline prompt with brand identity and mandatory booking reference verification.',
+    createdAt: '2026-08-01T10:00:00Z'
   },
   {
     id: 'ver_v2',
     promptId: 'prm_flight_support',
     versionNumber: 2,
-    systemPrompt: `You are an empathetic, clear, and professional airline voice support agent. 
-Your objective is to assist customers with flight cancellations and rebookings.
-
-Strictly adhere to the following steps:
-1. Greet the customer warmly and ask how you can help.
-2. Ask for their 6-character alphanumeric booking reference code (e.g., ABC123).
-3. If the customer does NOT know or cannot find their booking code, bypass it by asking for their Full Name and Phone Number registered to the flight.
-4. Verify their email address for security before processing any changes.
-5. Confirm the flight cancellation, explain refund terms, or offer alternative flights.
-6. Provide a summary of the action taken.
-
-CRITICAL RULES:
-- Never execute changes without either booking reference code OR full name + phone number check.
-- Keep responses concise (maximum 2 sentences per turn).`,
+    systemPrompt: `You are an AI customer support agent for SwiftAir. Always greet the customer warmly and ask for their booking reference number before checking cancellation policies.`,
     checklistConstraints: [
       'Warmly greet the customer',
-      'Verify booking code OR verify Full Name + Phone Number registered',
-      'Verify customer email address before changes',
-      'Offer clear refund/rebooking terms',
-      'Keep responses under 2 sentences'
+      'Acquire booking reference number before cancellation checks'
     ],
     conversationFlow: [
-      'Greeting and intent extraction',
-      'Security verification (booking code OR full name/phone fallback)',
-      'Verification of registered email address',
-      'Option presentation (refund/rebooking)',
-      'Confirmation and wrap-up'
+      'Greeting and query parsing',
+      'Booking reference verification'
+    ],
+    edgeCases: [],
+    changeDescription: 'Added phone number fallback verification for missing booking reference and added empathy & brevity constraints.',
+    createdAt: '2026-08-01T14:30:00Z'
+  },
+  {
+    id: 'ver_v3',
+    promptId: 'prm_flight_support',
+    versionNumber: 3,
+    systemPrompt: `You are an AI customer support agent for SwiftAir. Always greet the customer warmly and ask for their booking reference number before checking cancellation policies.\nIf the booking reference is missing, ask for their registered phone number as a fallback.\nKeep responses empathetic and under 3 sentences.`,
+    checklistConstraints: [
+      'Warmly greet the customer',
+      'Verify booking reference or fallback phone',
+      'Keep responses empathetic and short'
+    ],
+    conversationFlow: [
+      'Greeting and query parsing',
+      'Identity verification fallback'
+    ],
+    edgeCases: [],
+    changeDescription: 'Modified role title and PNR instructions; added full name fallback verification; added anti-hallucination guardrail for refunds.',
+    createdAt: '2026-08-01T18:45:00Z'
+  },
+  {
+    id: 'ver_v13',
+    promptId: 'prm_hotel_concierge',
+    versionNumber: 13,
+    systemPrompt: `You are an expert AI voice guest concierge and travel app booking specialist for Hotel Stay & Booking Support.\nAlways maintain an empathetic, clear, and professional tone and assist guests fluently in English.\n1. Greet the guest warmly and assist with stay reservations, hotel-specific policy inquiries, room modifications, or cancellations.\n2. HOTEL-SPECIFIC CANCELLATION PERIODS: Recognize that each hotel has its specific free cancellation deadline (e.g. free cancellation until 24/48 hours before check-in or specified date). If a guest cancels within their free cancellation period, process a 100% full refund with $0 cancellation charges.\n3. BOOK AT $0 FEATURE: Explain and support the 'Book at $0' feature, which allows guests to hold room bookings with zero upfront payment. Explicitly clarify that guests may hold multiple 'Book at $0' reservations, but total charges must be paid before the final payment deadline date, otherwise the system will automatically cancel the unpaid reservation.\n4. IDENTITY VERIFICATION & CONTEXT: For existing reservations, verify the 6-to-8 character confirmation reference or registered phone number before modifying details. Understand natural context (e.g., when a guest affirms 'yes' to a cancellation prompt).\n5. BREVITY & POLICIES: Keep voice responses concise, hospitable, and strictly under 2-3 sentences. Never promise unconfirmed upgrades without authorization.`,
+    checklistConstraints: [
+      'Warmly greet the guest',
+      'Hotel-specific free cancellation policy ($0 fee within window)',
+      'Book at $0 zero-upfront hold support',
+      'Name + phone fallback verification for lost codes',
+      'Brevity & hospitability constraint (max 2-3 sentences)'
+    ],
+    conversationFlow: [
+      'Greeting and query parsing',
+      'Property selection & Book at $0 deadline disclosure',
+      'Identity verification & reservation lookup',
+      'Free cancellation & payment deadline confirmation'
     ],
     edgeCases: [
       {
-        scenario: 'Customer does not have their booking code',
-        behavior: 'Ask for full name and phone number to verify booking records.'
-      },
-      {
-        scenario: 'No flight record exists under fallback search',
-        behavior: 'Politely request customer contact primary support desk via phone.'
+        scenario: 'Guest holds multiple Book at $0 reservations',
+        behavior: 'Permit multiple holds but explain automatic cancellation upon unpaid deadline.'
       }
     ],
-    changeDescription: 'Added name and phone verification fallback for passengers without booking codes.',
-    createdAt: '2026-07-09T14:30:00Z'
+    changeDescription: 'Compiled baseline prompt version v13 for Hotel Stay & Booking Support domain with Book at $0 feature, free cancellation window, and pay later rules.',
+    createdAt: '2026-09-22T10:00:00Z'
+  },
+  {
+    id: 'ver_v14',
+    promptId: 'prm_hotel_concierge',
+    versionNumber: 14,
+    systemPrompt: `You are an expert AI voice guest concierge and travel app booking specialist for Hotel Stay & Booking Support.\nAlways maintain an empathetic, clear, and professional tone and assist guests fluently in English.\n1. Greet the guest warmly and assist with stay reservations, hotel-specific policy inquiries, room modifications, or cancellations.\n2. HOTEL-SPECIFIC CANCELLATION PERIODS: Recognize that each hotel has its specific free cancellation deadline (e.g. free cancellation until 24/48 hours before check-in or specified date). If a guest cancels within their free cancellation period, process a 100% full refund with $0 cancellation charges.\n3. BOOK AT $0 FEATURE: Explain and support the 'Book at $0' feature, which allows guests to hold room bookings with zero upfront payment. Explicitly clarify that guests may hold multiple 'Book at $0' reservations, but total charges must be paid before the final payment deadline date, otherwise the system will automatically cancel the unpaid reservation.\n4. IDENTITY VERIFICATION & CONTEXT: For existing reservations, verify the 6-to-8 character confirmation reference or registered phone number before modifying details. Understand natural context (e.g., when a guest affirms 'yes' to a cancellation prompt).\n5. BREVITY & POLICIES: Keep voice responses concise, hospitable, and strictly under 2-3 sentences. Never promise unconfirmed upgrades without authorization.\n6. FALLBACK IDENTIFICATION: If the guest does not have their confirmation code, immediately trigger name and registered phone verification.\n7. LATE ARRIVALS: Explicitly confirm 24/7 keyless entry and luggage storage for after-midnight arrivals.\n8. MODIFICATION & UPGRADES: Support stay extension and room upgrades upon confirmation reference retrieval.`,
+    checklistConstraints: [
+      'Warmly greet the guest',
+      'Hotel-specific free cancellation policy ($0 fee within window)',
+      'Book at $0 zero-upfront hold support',
+      'Explicit fallback identity verification for lost codes',
+      '24/7 late check-in keyless entry & luggage holding',
+      'Stay extension & suite upgrade workflow',
+      'Brevity & hospitability constraint (max 2-3 sentences)'
+    ],
+    conversationFlow: [
+      'Greeting and query parsing',
+      'Identity fallback / Code lookup',
+      'Policy confirmation & modification execution'
+    ],
+    edgeCases: [
+      {
+        scenario: 'Late after-midnight arrival',
+        behavior: 'Reassure 24/7 keyless entry access and offer luggage holding.'
+      }
+    ],
+    changeDescription: 'Auto-evolved prompt after transcript quality analysis: Added explicit fallback verification for lost codes, 24/7 late check-in keyless entry rules, and suite modification workflow.',
+    createdAt: '2026-09-23T18:00:00Z'
   }
 ];
 
@@ -205,8 +222,117 @@ export const mockTestCases: TestCase[] = [
       flightNumber: 'AP-552'
     },
     createdAt: '2026-07-09T09:00:00Z'
+  },
+  {
+    id: 'tc_elena_delay',
+    name: 'Elena Rostova (Flight Delay Inquiry)',
+    customerProfile: 'Anxious traveler checking delay impact on connection.',
+    goal: 'Needs to check if connection in Chicago will be missed due to flight AP-552 delay.',
+    scenarioVariables: {
+      passengerName: 'Elena Rostova',
+      email: 'elena.r@connection.com',
+      flightNumber: 'AP-552'
+    },
+    createdAt: '2026-08-01T12:00:00Z'
+  },
+  {
+    id: 'tc_marcus_baggage',
+    name: 'Marcus Vance (Baggage Claim)',
+    customerProfile: 'Calm, patient passenger searching for lost luggage status.',
+    goal: 'Wants to find status of baggage checked on SA-302.',
+    scenarioVariables: {
+      passengerName: 'Marcus Vance',
+      email: 'marcus.v@baggage.com',
+      flightNumber: 'SA-302'
+    },
+    createdAt: '2026-08-01T15:00:00Z'
   }
 ];
+
+export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => {
+  const sysLower = (systemPrompt || '').toLowerCase();
+
+  if (sysLower.includes('hotel') || sysLower.includes('motel') || sysLower.includes('resort') || sysLower.includes('stay') || sysLower.includes('check-in')) {
+    return [
+      {
+        id: 'tc_hotel_book_at_zero',
+        name: 'Book at $0 Payment Deadline Inquiry',
+        customerProfile: 'Guest holding multiple zero-upfront payment reservations checking auto-cancellation cutoff rules.',
+        goal: 'Wants to check payment deadlines for multiple Book at $0 holds before unpaid reservations are automatically cancelled.',
+        scenarioVariables: { guestName: 'Alex Mercer', feature: 'Book at $0' },
+        createdAt: '2026-09-21T00:00:00Z'
+      },
+      {
+        id: 'tc_hotel_free_cancel_window',
+        name: 'Free Cancellation Period Confirmation',
+        customerProfile: 'Guest confirming cancellation within free cancellation window ("upto tomorrow").',
+        goal: 'Wants to confirm cancellation within hotel-specific free cancellation window to ensure $0 fee charge.',
+        scenarioVariables: { guestName: 'Sophia Lin', cancelWindow: 'Upto tomorrow' },
+        createdAt: '2026-09-21T00:00:00Z'
+      },
+      {
+        id: 'tc_hotel_cancel',
+        name: 'Angry Guest (Lost Confirmation Code)',
+        customerProfile: 'Frustrated, attempting to cancel booking for Motel Oracle without reference number.',
+        goal: 'Wants to cancel reservation for Motel Oracle without having their confirmation reference code.',
+        scenarioVariables: { guestName: 'Alex Mercer', hotelName: 'Motel Oracle' },
+        createdAt: '2026-09-20T00:00:00Z'
+      },
+      {
+        id: 'tc_hotel_modify',
+        name: 'Polite Suite Modification',
+        customerProfile: 'Cooperative, clear speaker requesting room upgrade or stay date shift.',
+        goal: 'Wants to extend stay by 2 nights and upgrade to Deluxe King Suite.',
+        scenarioVariables: { guestName: 'Sophia Lin', confirmationCode: 'HTL-882' },
+        createdAt: '2026-09-20T00:00:00Z'
+      },
+      {
+        id: 'tc_hotel_late_checkin',
+        name: 'Late Check-in Request',
+        customerProfile: 'Traveler arriving after midnight inquiring about keyless entry policy.',
+        goal: 'Wants to confirm late night check-in procedures and luggage holding.',
+        scenarioVariables: { guestName: 'Marcus Vance', arrivalTime: '01:30 AM' },
+        createdAt: '2026-09-20T00:00:00Z'
+      }
+    ];
+  }
+
+  if (sysLower.includes('doctor') || sysLower.includes('patient') || sysLower.includes('clinic') || sysLower.includes('dental') || sysLower.includes('medical')) {
+    return [
+      {
+        id: 'tc_clinic_urgent',
+        name: 'Anxious Patient (Appointment Request)',
+        customerProfile: 'Anxious patient seeking specialist consultation on short notice.',
+        goal: 'Wants to book an urgent consultation slot for acute discomfort.',
+        scenarioVariables: { patientName: 'Arthur Pendelton', specialty: 'General Practice' },
+        createdAt: '2026-09-20T00:00:00Z'
+      },
+      {
+        id: 'tc_clinic_routine',
+        name: 'Routine Check-up Schedule',
+        customerProfile: 'Cooperative patient scheduling annual physical examination.',
+        goal: 'Wants to book a routine check-up for next Tuesday morning.',
+        scenarioVariables: { patientName: 'Sophia Lin' },
+        createdAt: '2026-09-20T00:00:00Z'
+      }
+    ];
+  }
+
+  if (sysLower.includes('grooming') || sysLower.includes('pet') || sysLower.includes('dog') || sysLower.includes('cat') || sysLower.includes('vet')) {
+    return [
+      {
+        id: 'tc_pet_groom',
+        name: 'Nervous Pet Parent (Golden Retriever)',
+        customerProfile: 'Caring owner booking full groom package with special anxiety handling.',
+        goal: 'Wants to schedule full bath and groom package for 2-year-old dog.',
+        scenarioVariables: { petName: 'Barnaby', breed: 'Golden Retriever' },
+        createdAt: '2026-09-20T00:00:00Z'
+      }
+    ];
+  }
+
+  return mockTestCases;
+};
 
 // Dialogues corresponding to historical runs
 export const mockConversations: Conversation[] = [
@@ -292,6 +418,183 @@ export const mockConversations: Conversation[] = [
       suggestedPromptImprovement: 'Keep this structure. Proceed to evaluate with other test cases (e.g. Elderly Confused Passenger).',
       createdAt: '2026-07-09T14:47:00Z'
     }
+  },
+  {
+    id: 'conv_hotel_1',
+    promptVersionId: 'ver_v13',
+    testCaseId: 'tc_hotel_book_at_zero',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-23T17:40:00Z',
+    messages: [
+      { id: 'mh1_1', sender: 'agent', content: 'Hello! Thank you for contacting our hotel concierge support. How can I assist you today with your stay or reservation?', timestamp: '2026-09-23T17:40:02Z' },
+      { id: 'mh1_2', sender: 'customer', content: 'Hi, I have booked 3 places using Book at $0 and want to check the payment deadlines before they get cancelled.', timestamp: '2026-09-23T17:40:08Z' },
+      { id: 'mh1_3', sender: 'agent', content: "I can certainly help you review your active 'Book at $0' holds and finalize your preferred reservation! To cross-check your bookings and locate your account details, could you please provide your full name and registered phone number?", timestamp: '2026-09-23T17:40:15Z' },
+      { id: 'mh1_4', sender: 'customer', content: 'My name is Alex Mercer and phone is +1-555-0199.', timestamp: '2026-09-23T17:40:22Z' },
+      { id: 'mh1_5', sender: 'agent', content: "Thank you for verifying your details! I have cross-checked your account and retrieved your 3 active 'Book at $0' holds:\n1. Motel Oracle (Payment Deadline: Oct 25)\n2. Grand Plaza Resort (Payment Deadline: Oct 26)\n3. Seaside Suites (Payment Deadline: Oct 27)\n\nWhich of these 3 properties would you like to finalize and pay for today? I can also safely release your remaining holds.", timestamp: '2026-09-23T17:40:30Z' },
+      { id: 'mh1_6', sender: 'customer', content: 'I want to pay later for Motel Oracle.', timestamp: '2026-09-23T17:40:38Z' },
+      { id: 'mh1_7', sender: 'agent', content: "Understood! We will keep your 'Book at $0' hold active for Motel Oracle. You do not need to pay today—your payment deadline is October 25th. If total charges are not settled by October 25th, the system will automatically release the reservation with zero penalty. Would you like me to keep your other holds open or release them now?", timestamp: '2026-09-23T17:40:46Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_h1',
+      conversationId: 'conv_hotel_1',
+      promptVersionId: 'ver_v13',
+      successScore: 95,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Warmly greet the guest', passed: true, details: 'Agent warmly greeted and introduced concierge support desk.' },
+        { criteria: 'Verify guest name & phone for active holds', passed: true, details: 'Authenticated account details (Alex Mercer, +1-555-0199) before disclosing holds.' },
+        { criteria: 'List held properties with payment deadlines', passed: true, details: 'Listed all 3 held properties alongside cutoff dates (Oct 25, Oct 26, Oct 27).' },
+        { criteria: 'Support Book at $0 pay later preference', passed: true, details: 'Kept hold active for Motel Oracle without forcing upfront payment.' },
+        { criteria: 'Keep responses under 2-3 sentences', passed: true, details: 'All conversational turns respected length constraints.' }
+      ],
+      sentimentScore: 0.85,
+      tokenCount: 1120,
+      latencyMs: 540,
+      costUsd: 0.009,
+      rootCauseExplanation: "The voice agent accurately parsed the customer's multi-booking hold inquiry, authenticated account identity, clearly presented payment cutoff deadlines, and respected the guest's pay-later preference.",
+      suggestedPromptImprovement: 'Add explicit multi-step intent confirmation to proactively ask whether unselected holds should be immediately released or kept open until deadline.',
+      createdAt: '2026-09-23T17:41:00Z'
+    }
+  },
+  {
+    id: 'conv_hotel_2',
+    promptVersionId: 'ver_v13',
+    testCaseId: 'tc_hotel_free_cancel_window',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-23T17:42:00Z',
+    messages: [
+      { id: 'mh2_1', sender: 'agent', content: 'Hello! Thank you for contacting our hotel concierge support. How can I assist you today with your stay or reservation?', timestamp: '2026-09-23T17:42:02Z' },
+      { id: 'mh2_2', sender: 'customer', content: 'Hi, I need to check the free cancellation period for my booking at Motel Oracle.', timestamp: '2026-09-23T17:42:08Z' },
+      { id: 'mh2_3', sender: 'agent', content: "Under this hotel's cancellation policy for Motel Oracle, free cancellation applies up to your specified deadline (e.g. up to tomorrow). Cancellations processed within this free window incur zero fees ($0 charge).", timestamp: '2026-09-23T17:42:15Z' },
+      { id: 'mh2_4', sender: 'customer', content: 'Yes, the cancellation policy for this hotel is upto tomorrow, please cancel it.', timestamp: '2026-09-23T17:42:22Z' },
+      { id: 'mh2_5', sender: 'agent', content: 'Your cancellation for Motel Oracle has been successfully confirmed. Since your cancellation was completed within the hotel\'s free cancellation period, your total charge is $0 with zero cancellation fees. A confirmation receipt has been sent to your registered contact details.', timestamp: '2026-09-23T17:42:30Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_h2',
+      conversationId: 'conv_hotel_2',
+      promptVersionId: 'ver_v13',
+      successScore: 100,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Warmly greet the guest', passed: true, details: 'Agent greeted customer appropriately.' },
+        { criteria: 'Explain hotel free cancellation period', passed: true, details: 'Clarified zero fee cutoff for Motel Oracle.' },
+        { criteria: 'Process $0 fee cancellation within window', passed: true, details: 'Executed cancellation with 0 penalty.' },
+        { criteria: 'Send confirmation receipt', passed: true, details: 'Disclosed digital receipt dispatch.' }
+      ],
+      sentimentScore: 0.90,
+      tokenCount: 780,
+      latencyMs: 420,
+      costUsd: 0.006,
+      rootCauseExplanation: 'No failures detected. The agent recognized property context (Motel Oracle), verified the free cancellation window ("upto tomorrow"), and confirmed $0 fee cancellation.',
+      suggestedPromptImprovement: 'Maintain current structure for free cancellation policy inquiries.',
+      createdAt: '2026-09-23T17:43:00Z'
+    }
+  },
+  {
+    id: 'conv_hotel_3',
+    promptVersionId: 'ver_v13',
+    testCaseId: 'tc_hotel_cancel',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-23T17:44:00Z',
+    messages: [
+      { id: 'mh3_1', sender: 'agent', content: 'Hello! Thank you for contacting our hotel concierge support. How can I assist you today with your stay or reservation?', timestamp: '2026-09-23T17:44:02Z' },
+      { id: 'mh3_2', sender: 'customer', content: "I need to cancel my booking for Motel Oracle right now, but I don't have my confirmation code!", timestamp: '2026-09-23T17:44:08Z' },
+      { id: 'mh3_3', sender: 'agent', content: 'I can certainly help you cancel your booking for Motel Oracle. To locate your reservation, could you please provide your booking confirmation number or registered mobile number?', timestamp: '2026-09-23T17:44:15Z' },
+      { id: 'mh3_4', sender: 'customer', content: 'My name is Alex Mercer and phone is +1-555-0199.', timestamp: '2026-09-23T17:44:22Z' },
+      { id: 'mh3_5', sender: 'agent', content: 'Thank you for verifying your details, Alex Mercer. I have located your reservation for Motel Oracle. Would you like me to proceed with confirming your cancellation?', timestamp: '2026-09-23T17:44:30Z' },
+      { id: 'mh3_6', sender: 'customer', content: 'Yes, please confirm the cancellation.', timestamp: '2026-09-23T17:44:36Z' },
+      { id: 'mh3_7', sender: 'agent', content: 'Your cancellation for Motel Oracle has been successfully confirmed. Since your cancellation was completed within the hotel\'s free cancellation period, your total charge is $0 with zero cancellation fees. A confirmation receipt has been sent to your registered contact details.', timestamp: '2026-09-23T17:44:44Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_h3',
+      conversationId: 'conv_hotel_3',
+      promptVersionId: 'ver_v13',
+      successScore: 95,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Warmly greet the guest', passed: true, details: 'Agent introduced concierge desk.' },
+        { criteria: 'Fallback verification when code is lost', passed: true, details: 'Triggered name & phone authentication when primary reference code was missing.' },
+        { criteria: 'De-escalate customer frustration', passed: true, details: 'Maintained reassuring posture under guest urgency.' },
+        { criteria: 'Confirm $0 charge cancellation', passed: true, details: 'Confirmed full refund with $0 fee.' }
+      ],
+      sentimentScore: 0.75,
+      tokenCount: 1050,
+      latencyMs: 580,
+      costUsd: 0.008,
+      rootCauseExplanation: 'Fallback identity verification flow triggered successfully when guest reported missing confirmation code. De-escalated agitation and finalized reservation cancellation cleanly.',
+      suggestedPromptImprovement: 'Explicitly prompt for full name and phone number as primary fallback in system instructions.',
+      createdAt: '2026-09-23T17:45:00Z'
+    }
+  },
+  {
+    id: 'conv_hotel_4',
+    promptVersionId: 'ver_v13',
+    testCaseId: 'tc_hotel_modify',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-23T17:46:00Z',
+    messages: [
+      { id: 'mh4_1', sender: 'agent', content: 'Hello! Thank you for contacting our hotel concierge support. How can I assist you today with your stay or reservation?', timestamp: '2026-09-23T17:46:02Z' },
+      { id: 'mh4_2', sender: 'customer', content: 'Hello! I would like to modify my stay dates and upgrade my room for my reservation.', timestamp: '2026-09-23T17:46:08Z' },
+      { id: 'mh4_3', sender: 'agent', content: 'I can help modify or reschedule your reservation. Could you please provide your confirmation number along with your new preferred dates or requested room type?', timestamp: '2026-09-23T17:46:15Z' },
+      { id: 'mh4_4', sender: 'customer', content: 'My confirmation code is HTL-882, and I want to extend my stay by 2 nights and upgrade to Deluxe King Suite.', timestamp: '2026-09-23T17:46:22Z' },
+      { id: 'mh4_5', sender: 'agent', content: 'Thank you! I have retrieved reservation HTL-882. I have successfully extended your stay by 2 nights and upgraded your room to the Deluxe King Suite. A confirmation receipt with updated stay details has been sent to your email. Is there anything else I can assist with?', timestamp: '2026-09-23T17:46:30Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_h4',
+      conversationId: 'conv_hotel_4',
+      promptVersionId: 'ver_v13',
+      successScore: 100,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Warmly greet the guest', passed: true, details: 'Agent greeted guest warmly.' },
+        { criteria: 'Verify confirmation code HTL-882', passed: true, details: 'Retrieved booking HTL-882.' },
+        { criteria: 'Extend stay by requested nights', passed: true, details: 'Added 2 nights to reservation.' },
+        { criteria: 'Upgrade to Deluxe King Suite', passed: true, details: 'Upgraded room category successfully.' }
+      ],
+      sentimentScore: 0.95,
+      tokenCount: 890,
+      latencyMs: 490,
+      costUsd: 0.007,
+      rootCauseExplanation: 'Flawless stay modification execution. Verified reference code, processed 2-night extension, and applied room upgrade to Deluxe King Suite.',
+      suggestedPromptImprovement: 'Keep this modification pipeline.',
+      createdAt: '2026-09-23T17:47:00Z'
+    }
+  },
+  {
+    id: 'conv_hotel_5',
+    promptVersionId: 'ver_v13',
+    testCaseId: 'tc_hotel_late_checkin',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-23T17:48:00Z',
+    messages: [
+      { id: 'mh5_1', sender: 'agent', content: 'Hello! Thank you for contacting our hotel concierge support. How can I assist you today with your stay or reservation?', timestamp: '2026-09-23T17:48:02Z' },
+      { id: 'mh5_2', sender: 'customer', content: 'Hi, I will be arriving late tonight around 01:30 AM. Can I check in after midnight?', timestamp: '2026-09-23T17:48:08Z' },
+      { id: 'mh5_3', sender: 'agent', content: 'We welcome late check-ins! Our front desk operates 24/7, and keyless entry is available for after-midnight arrivals around 1:30 AM. Your room reservation will remain guaranteed, and our concierge will securely hold your luggage if needed. Is there anything else you need for your stay?', timestamp: '2026-09-23T17:48:15Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_h5',
+      conversationId: 'conv_hotel_5',
+      promptVersionId: 'ver_v13',
+      successScore: 100,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Warmly greet the guest', passed: true, details: 'Agent greeted guest.' },
+        { criteria: 'Confirm 24/7 front desk & late check-in policy', passed: true, details: 'Reassured 1:30 AM arrival access.' },
+        { criteria: 'Inform keyless entry & luggage hold rules', passed: true, details: 'Outlined keyless entry and luggage storage options.' }
+      ],
+      sentimentScore: 0.92,
+      tokenCount: 650,
+      latencyMs: 380,
+      costUsd: 0.005,
+      rootCauseExplanation: 'Agent provided immediate, reassuring policy confirmation for late arrival with keyless entry access and luggage handling.',
+      suggestedPromptImprovement: 'Maintain current late arrival policy instructions.',
+      createdAt: '2026-09-23T17:49:00Z'
+    }
   }
 ];
 
@@ -316,9 +619,25 @@ export const mockCustomerDialogues: Record<string, string[]> = {
     "Hello dear... I am trying to figure out if my flight is going to be late. The board says delayed...",
     "Oh... booking code? Goodness, I don't know where that is. My daughter printed something out but I left it in the car.",
     "My name is Arthur Pendelton, and my phone is 555-9081.",
-    "Oh, let me see... is it artie.p@outlook.com? Yes, I think that is the one.",
+    "Oh, let see... is it artie.p@outlook.com? Yes, I think that is the one.",
     "I just want to know if my flight AP-552 is delayed. I don't want to miss my connection in Chicago.",
     "Oh thank you so much, dear. You are very helpful."
+  ],
+  tc_elena_delay: [
+    "Hello. I'd like to check if flight AP-552 is delayed. I have a connection in Chicago and am worried.",
+    "I don't have my booking code right now, sorry.",
+    "My name is Elena Rostova and phone is 555-9081.",
+    "Email is elena.r@connection.com.",
+    "Thank you. Will I miss my connection?",
+    "That is a huge relief. Thank you for checking!"
+  ],
+  tc_marcus_baggage: [
+    "Hi, I checked my bags on flight SA-302 but they haven't arrived at the belt. Can you check the status?",
+    "No booking reference code handy.",
+    "My name is Marcus Vance and phone is 555-0199.",
+    "Email is marcus.v@baggage.com.",
+    "Yes, please track them.",
+    "Okay, thank you for tracking that."
   ]
 };
 
@@ -348,5 +667,21 @@ export const mockAgentDialogues: Record<string, string[]> = {
     "Thank you, Arthur. Let me just confirm, is your registered email artie.p@outlook.com?",
     "Yes, I have pulled up your booking. Flight AP-552 is delayed by 45 minutes, but your connecting flight in Chicago has also been delayed, so you will make the connection. Is that a relief?",
     "You are very welcome, Arthur! I hope you have a pleasant trip. Let us know if you need anything else."
+  ],
+  tc_elena_delay: [
+    "Hello! Thank you for calling SwiftAir. My name is Alex. How can I help you today?",
+    "I can certainly check that. Do you have your 6-character booking reference code?",
+    "No worries, let's look you up. May I please have your full name and registered phone number?",
+    "Thank you, Elena. For verification, could you confirm the email address registered on your booking?",
+    "Email verified. I see flight AP-552 is delayed by 45 minutes, but your connecting flight has also been delayed, so you will make it. Is that a relief?",
+    "You are very welcome, Elena! Have a wonderful trip."
+  ],
+  tc_marcus_baggage: [
+    "Hello! Thank you for calling SwiftAir. My name is Alex. How can I help you today?",
+    "I'm sorry to hear that your baggage is missing. Do you have your 6-digit booking code?",
+    "No worries. Could you please provide your full name and registered phone number?",
+    "Thank you, Marcus. To complete verification, please provide your registered email address.",
+    "Email verified. I see SA-302 baggage tags are currently being processed at carousel 4. They should arrive in 5 minutes. Should I verify anything else?",
+    "You are welcome, Marcus. Have a great day!"
   ]
 };

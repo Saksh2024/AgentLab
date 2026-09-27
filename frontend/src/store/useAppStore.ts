@@ -50,6 +50,10 @@ interface AppState {
   appendAgentStream: (chunk: string) => void;
   setAgentTyping: (isTyping: boolean) => void;
   runBatchRegression: (versionId: string, onProgress?: (completed: number, total: number) => void) => void;
+  fetchVersions: () => Promise<void>;
+  setConversationReport: (conversationId: string, report: AnalysisReport) => void;
+  addConversation: (conv: Conversation) => void;
+  saveEvolvedVersion: (previousPrompt: string, improvedPrompt: string, summary: string) => Promise<string | null>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -139,16 +143,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
 
     const activeVer = get().versions.find(v => v.id === versionId);
-    const systemPrompt = activeVer ? activeVer.systemPrompt : "You are an AI customer support agent for SwiftAir. Warmly greet the customer and ask for their 6-digit booking reference.";
+    const systemPrompt = activeVer ? activeVer.systemPrompt : "You are an AI customer support agent for hotel concierge support. Warmly greet the customer and ask how you can assist with their reservation.";
 
-    // Trigger initial agent greeting dynamically or fallback to a premium static greeting
+    // Trigger initial agent greeting dynamically matching system prompt domain
     fetch(`${API_BASE}/simulator/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         system_prompt: systemPrompt,
         history: [],
-        latest_message: "Greet the customer warmly, introduce yourself as SwiftAir Support, and present their main options (Rebook flight, cancel & request a refund, check booking details) to get started."
+        latest_message: "greeting"
       })
     })
     .then(res => {
@@ -174,10 +178,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
     })
     .catch(() => {
+      const sysLower = systemPrompt.toLowerCase();
+      let defaultGreeting = "Hello! Thank you for contacting customer support. How can I assist you today?";
+      if (sysLower.includes("hotel") || sysLower.includes("motel") || sysLower.includes("stay") || sysLower.includes("resort") || sysLower.includes("check-in")) {
+        defaultGreeting = "Hello! Thank you for contacting hotel concierge support. How can I assist you today with your stay or reservation?";
+      } else if (sysLower.includes("flight") || sysLower.includes("airline") || sysLower.includes("pnr")) {
+        defaultGreeting = "Hello! Thank you for contacting airline customer support. How can I assist you today with your flight?";
+      } else if (sysLower.includes("doctor") || sysLower.includes("patient") || sysLower.includes("clinic") || sysLower.includes("medical")) {
+        defaultGreeting = "Hello! Thank you for contacting our medical care coordination desk. How can I assist you with your appointment today?";
+      } else if (sysLower.includes("pet") || sysLower.includes("grooming") || sysLower.includes("vet")) {
+        defaultGreeting = "Hello! Thank you for contacting pet care concierge support. How can I assist you and your pet today?";
+      }
+
       const fallbackMsg: Message = {
         id: `msg_agent_init_fallback_${Date.now()}`,
         sender: 'agent',
-        content: "Hello! Thank you for calling SwiftAir Support. How can I assist you today? Please choose from the following options:\n1. Rebook your flight\n2. Cancel your flight & request a refund\n3. Check booking details or flight status",
+        content: defaultGreeting,
         timestamp: new Date().toISOString()
       };
       set((state) => {
@@ -194,7 +210,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   
   stopSimulation: () => {
+    const { activeConversation, conversations } = get();
+    let updatedConvs = [...conversations];
+    if (activeConversation && activeConversation.messages.length > 0) {
+      const convToSave: Conversation = {
+        ...activeConversation,
+        status: 'completed'
+      };
+      const existingIdx = updatedConvs.findIndex(c => c.id === convToSave.id);
+      if (existingIdx >= 0) {
+        updatedConvs[existingIdx] = convToSave;
+      } else {
+        updatedConvs = [convToSave, ...updatedConvs];
+      }
+    }
     set({
+      conversations: updatedConvs,
       isSimulating: false,
       isAgentTyping: false,
       activeConversation: null,
@@ -477,5 +508,113 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
       }, (idx + 1) * 300);
     });
+  },
+  
+  fetchVersions: async () => {
+    try {
+      const res = await fetch(`${API_BASE}/versions/`);
+      if (res.ok) {
+        const data = await res.json();
+        // Map backend Version to frontend PromptVersion
+        const mappedFromBackend: PromptVersion[] = data.map((v: any) => {
+          const sysLower = (v.improved_prompt || '').toLowerCase();
+          const isHotel = sysLower.includes('hotel') || sysLower.includes('motel') || sysLower.includes('stay') || sysLower.includes('concierge');
+          
+          return {
+            id: `ver_v${v.version_number}`,
+            promptId: isHotel ? 'prm_hotel_concierge' : 'prm_flight_support',
+            versionNumber: v.version_number,
+            systemPrompt: v.improved_prompt,
+            checklistConstraints: isHotel
+              ? [
+                  'Warmly greet the guest',
+                  'Hotel-specific free cancellation policy ($0 fee within window)',
+                  'Book at $0 zero-upfront hold support',
+                  'Explicit fallback identity verification for lost codes',
+                  '24/7 late check-in keyless entry & luggage holding',
+                  'Brevity & hospitability constraint (max 2-3 sentences)'
+                ]
+              : v.version_number >= 3 
+              ? ['Warmly greet the customer', 'Verify booking reference or fallback phone', 'Keep responses empathetic and short']
+              : v.version_number === 2 
+              ? ['Warmly greet the customer', 'Acquire booking reference number before cancellation checks']
+              : ['Assist users with questions'],
+            conversationFlow: isHotel
+              ? ['Greeting and query parsing', 'Identity fallback / Code lookup', 'Policy confirmation & modification execution']
+              : v.version_number >= 3
+              ? ['Greeting and query parsing', 'Identity verification fallback']
+              : v.version_number === 2
+              ? ['Greeting and query parsing', 'Booking reference verification']
+              : ['Greeting and query parsing'],
+            edgeCases: [],
+            changeDescription: v.summary_of_changes,
+            createdAt: v.timestamp
+          };
+        });
+
+        // Merge with existing versions to ensure none are lost
+        const existingVersions = get().versions;
+        const versionMap = new Map<string, PromptVersion>();
+        existingVersions.forEach(v => versionMap.set(v.id, v));
+        mappedFromBackend.forEach(v => versionMap.set(v.id, v));
+
+        const merged = Array.from(versionMap.values());
+        merged.sort((a, b) => a.versionNumber - b.versionNumber);
+        
+        set({ versions: merged });
+        if (merged.length > 0) {
+          const latest = merged[merged.length - 1];
+          set({ activeVersionId: latest.id });
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch versions from backend SQLite:", err);
+    }
+  },
+
+  setConversationReport: (conversationId: string, report: AnalysisReport) => {
+    set((state) => ({
+      conversations: state.conversations.map((c) =>
+        c.id === conversationId ? { ...c, analysisReport: report, status: 'completed' } : c
+      )
+    }));
+  },
+
+  addConversation: (conv: Conversation) => {
+    set((state) => ({
+      conversations: [conv, ...state.conversations]
+    }));
+  },
+
+  saveEvolvedVersion: async (previousPrompt: string, improvedPrompt: string, summary: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/versions/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          previous_prompt: previousPrompt,
+          improved_prompt: improvedPrompt,
+          summary_of_changes: summary,
+        }),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        await get().fetchVersions();
+        const createdVerId = `ver_v${created.version_number}`;
+        set({ activeVersionId: createdVerId });
+        return createdVerId;
+      }
+    } catch (err) {
+      console.warn("Failed to persist evolved version to backend SQLite:", err);
+    }
+    // Fallback in-memory version creation
+    const newVerId = get().createNewPromptVersion(
+      improvedPrompt,
+      ['Warmly greet', 'Identity verification with fallback', 'Empathetic de-escalation', 'Max 2-3 sentences'],
+      ['Greeting', 'Identity Verification', 'Resolution', 'Confirmation'],
+      summary
+    );
+    return newVerId;
   }
 }));
+

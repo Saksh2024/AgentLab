@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     )
 
     OPENAI_API_KEY: Optional[str] = None
+    OPENAI_BASE_URL: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4o-mini"
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "AI Voice Agent Studio API"
 

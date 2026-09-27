@@ -159,7 +159,10 @@ const DiffLine: React.FC<{ chunk: DiffChunk; index: number }> = ({ chunk, index 
   );
 };
 
+import { useAppStore } from '../../../store/useAppStore';
+
 export const PromptEvolutionPage: React.FC = () => {
+  const { activeVersionId, fetchVersions: storeFetchVersions } = useAppStore();
   const [versions, setVersions] = useState<Version[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [diff, setDiff] = useState<DiffResult | null>(null);
@@ -184,8 +187,11 @@ export const PromptEvolutionPage: React.FC = () => {
       if (!res.ok) throw new Error(`Failed to load versions (${res.status})`);
       const data: Version[] = await res.json();
       setVersions(data);
-      if (data.length > 0 && !selectedId) {
-        setSelectedId(data[0].id);
+      if (data.length > 0) {
+        // If activeVersionId matches one of the versions, prefer selecting it
+        const targetVerNum = activeVersionId ? parseInt(activeVersionId.replace('ver_v', ''), 10) : null;
+        const matched = targetVerNum ? data.find(v => v.version_number === targetVerNum) : null;
+        setSelectedId(matched ? matched.id : data[0].id);
       }
     } catch (err: any) {
       console.warn('Backend SQLite not reachable, using offline seed data:', err.message);
@@ -196,7 +202,8 @@ export const PromptEvolutionPage: React.FC = () => {
     } finally {
       setIsLoadingVersions(false);
     }
-  }, [selectedId]);
+  }, [activeVersionId]);
+
 
   const fetchDiff = useCallback(async (id: number) => {
     setIsLoadingDiff(true);
@@ -253,6 +260,7 @@ export const PromptEvolutionPage: React.FC = () => {
       setFormImproved('');
       setFormSummary('');
       await fetchVersions();
+      await storeFetchVersions();
       setSelectedId(created.id);
     } catch (err: any) {
       setError(err.message);

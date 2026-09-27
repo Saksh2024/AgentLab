@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../../store/useAppStore';
+import { getDomainCustomerProfiles } from '../../../services/mockDb';
 import { 
   Send, 
   Settings, 
@@ -39,8 +40,10 @@ export const SimulatorPage: React.FC = () => {
     setActiveTestCaseId,
     startSimulation,
     stopSimulation,
-    sendMessage
+    sendMessage,
+    addConversation
   } = useAppStore();
+
 
   const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [inputText, setInputText] = useState('');
@@ -75,8 +78,10 @@ export const SimulatorPage: React.FC = () => {
     }
   };
 
-  const selectedTestCase = testCases.find(tc => tc.id === activeTestCaseId);
   const selectedVersion = versions.find(v => v.id === activeVersionId);
+  const domainProfiles = getDomainCustomerProfiles(selectedVersion?.systemPrompt);
+  const displayProfiles = domainProfiles.length > 0 ? domainProfiles : testCases;
+  const selectedTestCase = displayProfiles.find(tc => tc.id === activeTestCaseId) || displayProfiles[0];
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -132,7 +137,7 @@ export const SimulatorPage: React.FC = () => {
               <span className="text-[9px] text-zinc-650 font-mono cursor-pointer hover:underline" onClick={() => navigate('/studio')}>Edit Library</span>
             </label>
             <div className="space-y-2">
-              {testCases.map((tc) => (
+              {displayProfiles.map((tc) => (
                 <div 
                   key={tc.id} 
                   onClick={() => !isSimulating && setActiveTestCaseId(tc.id)}
@@ -141,7 +146,7 @@ export const SimulatorPage: React.FC = () => {
                       ? 'opacity-50 cursor-not-allowed'
                       : ''
                   } ${
-                    tc.id === activeTestCaseId 
+                    tc.id === (activeTestCaseId || selectedTestCase?.id)
                       ? 'border-indigo-600 bg-indigo-600/[0.02] text-zinc-200' 
                       : 'border-zinc-850 bg-zinc-950 hover:border-zinc-850 hover:bg-zinc-900/60 text-zinc-400'
                   }`}
@@ -201,8 +206,24 @@ export const SimulatorPage: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="text-[10px] font-mono text-zinc-500">
-            Prompt: v{selectedVersion?.versionNumber} | Persona: {selectedTestCase?.name}
+          <div className="flex items-center gap-3">
+            {activeConversation && activeConversation.messages.length > 1 && (
+              <button
+                onClick={() => {
+                  if (activeConversation) {
+                    addConversation(activeConversation);
+                  }
+                  navigate('/analyzer');
+                }}
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Analyze & Evolve Prompt
+              </button>
+            )}
+            <div className="text-[10px] font-mono text-zinc-500">
+              Prompt: v{selectedVersion?.versionNumber} | Persona: {selectedTestCase?.name}
+            </div>
           </div>
         </div>
 
