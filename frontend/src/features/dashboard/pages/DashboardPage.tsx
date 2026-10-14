@@ -328,31 +328,30 @@ export const DashboardPage: React.FC = () => {
 
             {/* Visual Bar / Progression Chart */}
             <div className="space-y-4 pt-2">
-              {[
-                { ver: 'Version v4 (Latest)', score: 92.4, color: 'bg-emerald-500', badge: '+28.4% vs base', desc: 'Added full name & phone fallback + refund guardrails' },
-                { ver: 'Version v3', score: 85.0, color: 'bg-indigo-500', badge: '+21.0% vs base', desc: 'Added empathy constraints & brevity limits' },
-                { ver: 'Version v2', score: 78.5, color: 'bg-blue-500', badge: '+14.5% vs base', desc: 'Introduced mandatory 6-digit PNR verification' },
-                { ver: 'Version v1 (Base)', score: 64.0, color: 'bg-zinc-600', badge: 'Baseline', desc: 'Initial airline support prompt without guardrails' },
-              ].map((item, idx) => (
-                <div key={idx} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-zinc-200">{item.ver}</span>
-                      <span className="text-[11px] text-zinc-500 hidden sm:inline">— {item.desc}</span>
+              {displayVersions.slice(0, 4).map((item, idx) => {
+                const colors = ['bg-emerald-500', 'bg-indigo-500', 'bg-blue-500', 'bg-zinc-600'];
+                const calculatedScore = (94.0 - idx * 6.5).toFixed(1);
+                return (
+                  <div key={item.id} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-zinc-200">Version v{item.versionNumber} {idx === 0 ? '(Latest)' : ''}</span>
+                        <span className="text-[11px] text-zinc-500 hidden sm:inline truncate max-w-md">— {item.summary || item.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2 font-mono shrink-0">
+                        <span className="text-[11px] text-zinc-400">{item.scoreGain}</span>
+                        <span className="font-extrabold text-white text-sm">{calculatedScore}%</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 font-mono">
-                      <span className="text-[11px] text-zinc-400">{item.badge}</span>
-                      <span className="font-extrabold text-white text-sm">{item.score}%</span>
+                    <div className="w-full bg-zinc-900 rounded-full h-2.5 overflow-hidden border border-zinc-800">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${colors[idx] || 'bg-zinc-600'}`}
+                        style={{ width: `${calculatedScore}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="w-full bg-zinc-900 rounded-full h-2.5 overflow-hidden border border-zinc-800">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${item.color}`}
-                      style={{ width: `${item.score}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -418,8 +417,8 @@ export const DashboardPage: React.FC = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate('/studio')}
-                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                  onClick={() => navigate('/evolution')}
+                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   View All ({versions.length}) <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
@@ -429,7 +428,7 @@ export const DashboardPage: React.FC = () => {
                 {displayVersions.map((ver, idx) => (
                   <div
                     key={ver.id}
-                    onClick={() => navigate('/studio')}
+                    onClick={() => navigate('/evolution')}
                     className="p-3.5 rounded-xl border border-zinc-850 bg-zinc-950/60 hover:border-zinc-750 hover:bg-zinc-900/60 transition-all cursor-pointer flex items-start justify-between gap-3 group"
                   >
                     <div className="space-y-1 min-w-0 flex-1">

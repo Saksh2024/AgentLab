@@ -45,7 +45,7 @@ export const SimulatorPage: React.FC = () => {
   } = useAppStore();
 
 
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash');
   const [inputText, setInputText] = useState('');
   
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -104,10 +104,9 @@ export const SimulatorPage: React.FC = () => {
               onChange={(e) => setSelectedModel(e.target.value)}
               className="w-full text-xs px-3 py-2 bg-zinc-950 rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 text-zinc-300 font-mono cursor-pointer"
             >
-              <option value="gpt-4o">GPT-4o (OpenAI)</option>
-              <option value="gpt-4o-mini">GPT-4o-mini (Cost-Saver)</option>
-              <option value="claude-3-5">Claude 3.5 Sonnet</option>
-              <option value="mock-stub">Mock Provider (Free/Offline)</option>
+              <option value="gemini-3.5-flash">Gemini 3.5 Flash (Google Free)</option>
+              <option value="gemini-3.6-flash">Gemini 3.6 Flash (Google Free)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Google Free)</option>
             </select>
           </div>
 

@@ -22,7 +22,7 @@ class OpenAIClient:
     def __init__(self, api_key: str = None, base_url: str = None):
         self.api_key = api_key or settings.OPENAI_API_KEY
         self.base_url = base_url or settings.OPENAI_BASE_URL
-        self.model = settings.OPENAI_MODEL or "gpt-4o-mini"
+        self.model = settings.OPENAI_MODEL or "gemini-3.5-flash"
         
         # If key is missing or default placeholder, mark as unconfigured
         if not self.api_key or self.api_key in ("your_openai_api_key_here", "sk-...", ""):
@@ -448,6 +448,7 @@ class OpenAIClient:
                     model=self.model,
                     messages=messages,
                     temperature=0.7,
+                    max_tokens=250,
                 )
                 return completion.choices[0].message.content
             except Exception as exc:
@@ -597,7 +598,7 @@ class OpenAIClient:
 
             try:
                 completion = await self.client.beta.chat.completions.parse(
-                    model=self.model if "gpt-4o" in self.model else "gpt-4o-2024-08-06",
+                    model=self.model,
                     messages=[
                         {"role": "system", "content": system_instruction},
                         {"role": "user", "content": transcript_text}
