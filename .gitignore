@@ -19,6 +19,8 @@ frontend/dist/
 frontend/dist-ssr/
 frontend/.env
 frontend/*.local
+frontend copy/
+* copy/
 
 # IDEs and OS files
 .vscode/

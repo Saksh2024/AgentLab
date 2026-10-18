@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-10-15
+
+### Added
+* **Expansion Across 6 Production Domains**:
+  * Fully expanded system instructions compilation, conversational heuristics, and quality auditing across 6 production domains:
+    1. **Hotel Stay & Booking Support** (Travel App / Hotel Concierge: "Book at $0" zero-upfront holds, hotel-specific free cancellation periods, "pay later" workflow, room upgrades, and after-midnight 24/7 keyless arrival).
+    2. **Airlines Support - Cancellations & Rebooking** (Flight Support / SwiftAir: mandatory 6-digit PNR lookup, full name & mobile fallback verification, rebooking pipelines, anti-hallucination refund policies).
+    3. **Healthcare & Clinical Intake** (Medical Clinic: HIPAA-compliant triage, orthopedic consultation booking with Dr. Reed, insurance intake, and strict 911 emergency safeguard triage for acute/life-threatening symptoms).
+    4. **Pet Care & Veterinary Emergency** (Pet Concierge: grooming package bookings, mandatory Rabies & Bordetella vaccine validation, anxiety gentle care accommodations, and 24/7 toxic ingestion emergency triage).
+    5. **Banking & Fraud Dispute Support** (Financial Services: multi-factor authentication, immediate debit/credit card locking, $450 fraud dispute case logging `#FD-8942`, daily wire limit elevation to $25,000 with 2FA push authorization).
+    6. **Technical Support & Telecom** (Broadband Support: FiberGateway X3 red blinking optical light diagnostics, non-destructive 30-second modem power-cycling, Level-2 field technician dispatch ticket `#TC-7710`, and 1 Gbps Gigabit Fiber upgrades).
+* **Automated Multi-Domain Test Suites**:
+  * **Unified Multi-Domain Test Runner (`test_all_6_domains_suite.py`)**:
+    * Comprehensive automated testing suite executing 16 multi-turn test scenarios across all 6 domains.
+    * Automatically validates Meta-Prompt Compilation, Multi-Turn Conversational Dialogue Simulation, Intent Routing, Domain Keyword Alignment, and Transcript Quality Assurance (16/16 Passed, 100%).
+  * **Pytest Test Integration (`test_pytest_domains.py`)**:
+    * Parameterized test execution for pytest (`python -m pytest test_pytest_domains.py`), running prompt compilation and simulation QA across all 6 domains (12/12 Passed in 1.69s).
+  * **Fast Deterministic Offline Mode**:
+    * Defaulted diagnostic test suites to offline heuristic mode to guarantee instantaneous, reproducible test execution independent of external API quota or 503 gateway demand spikes, with optional `--live` flag for live Gemini models.
+* **Frontend Seed Prompts & Multi-Domain Personas**:
+  * Added prompt models and versions for all 6 domains (`ver_v1`–`ver_v3` Airline, `ver_v13`–`ver_v14` Hotel, `ver_v30` Healthcare, `ver_v40` Pet Care, `ver_v50` Banking, `ver_v60` Telecom) in `mockDb.ts`.
+  * Updated `useAppStore.ts` with domain-aware fallback greetings across all 6 domains.
+  * Added rich customer personas and simulation autoplay dialogues for all 6 domains in `mockCustomerDialogues` and `mockAgentDialogues`.
+
+### Fixed
+* **Pet Care Conversational Continuation**:
+  * Fixed dialogue matching in `OpenAIClient.simulate_chat_turn` where customer responses confirming vaccination status without repeating the pet name ("Barnaby") or service package were misclassified as general policy queries rather than booking finalizations.
+* **Airline Support Fallback Verification & Dedicated Branch**:
+  * Implemented dedicated `is_flight` multi-turn dialogue routing branch in `OpenAIClient.simulate_chat_turn`.
+  * Added history check for fallback verification so customer name/phone inputs directly retrieve booking details and process cancellation refunds without getting trapped in generic hotel or flight fallback prompts.
+* **Initial Greeting Classification**:
+  * Refined initial greeting detection to strictly match greeting words (`hi`, `hello`, `hey`) when utterances are short (<= 2 words), preventing compound initial inquiries like *"Hi, I have booked 3 places using Book at $0..."* from being incorrectly treated as empty greetings.
+* **Guest Name Acknowledgment**:
+  * Added guest name acknowledgment to hotel multi-booking cross-check replies.
+
+### Verified
+* **Automated Backend Suites**:
+  * `test_all_6_domains_suite.py` — **16/16 Tests PASSED** (100% across all 6 domains).
+  * `pytest test_pytest_domains.py` — **12/12 Tests PASSED** (100% in 1.69s).
+  * `test_hotel_cases.py` — **5/5 Tests PASSED**.
+  * `test_use_cases_3_to_6.py` — **8/8 Tests PASSED**.
+  * `test_all_domains.py` — **6/6 Domains PASSED**.
+  * `verify_app.py` & `verify_evolution.py` — **All diagnostics PASSED**.
+* **Frontend Diagnostics**:
+  * Production bundle build (`npm run build`) — **0 Errors** (1795 modules transformed in 1.01s).
+
+---
+
 ## [1.3.0] - 2026-09-22
 
 ### Added

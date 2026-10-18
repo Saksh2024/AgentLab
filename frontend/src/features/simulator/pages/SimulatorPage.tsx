@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../../store/useAppStore';
-import { getDomainCustomerProfiles } from '../../../services/mockDb';
+import { 
+  DOMAINS_CONFIG, 
+  detectDomainFromPrompt, 
+  getDomainCustomerProfiles 
+} from '../../../services/mockDb';
 import { 
   Send, 
   Settings, 
   Mic,
   Sparkles,
   User,
-  Bot
+  Bot,
+  Layers
 } from 'lucide-react';
 
 const SimpleMarkdown: React.FC<{ content: string }> = ({ content }) => {
@@ -31,6 +36,8 @@ export const SimulatorPage: React.FC = () => {
   const {
     versions,
     testCases,
+    selectedDomainId,
+    selectDomain,
     activeVersionId,
     activeTestCaseId,
     activeConversation,
@@ -43,7 +50,6 @@ export const SimulatorPage: React.FC = () => {
     sendMessage,
     addConversation
   } = useAppStore();
-
 
   const [selectedModel, setSelectedModel] = useState('gemini-3.5-flash');
   const [inputText, setInputText] = useState('');
@@ -78,10 +84,20 @@ export const SimulatorPage: React.FC = () => {
     }
   };
 
-  const selectedVersion = versions.find(v => v.id === activeVersionId);
-  const domainProfiles = getDomainCustomerProfiles(selectedVersion?.systemPrompt);
+  const currentDomain = DOMAINS_CONFIG.find(d => d.id === selectedDomainId) || DOMAINS_CONFIG[0];
+  const selectedVersion = versions.find(v => v.id === activeVersionId) || versions[0];
+  const domainProfiles = getDomainCustomerProfiles(selectedVersion?.systemPrompt, currentDomain.id);
   const displayProfiles = domainProfiles.length > 0 ? domainProfiles : testCases;
   const selectedTestCase = displayProfiles.find(tc => tc.id === activeTestCaseId) || displayProfiles[0];
+
+  // Group prompt versions for current domain vs other domains
+  const domainVersions = versions.filter(v => 
+    v.promptId === currentDomain.promptId || 
+    detectDomainFromPrompt(v.systemPrompt) === currentDomain.id
+  );
+  const otherVersions = versions.filter(v => 
+    !domainVersions.some(dv => dv.id === v.id)
+  );
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -91,6 +107,35 @@ export const SimulatorPage: React.FC = () => {
           <div className="space-y-1">
             <h2 className="text-sm font-bold text-zinc-150 uppercase tracking-wider">Simulator Deck</h2>
             <p className="text-[11px] text-zinc-550">Mount target prompts and customer behaviors to run live turn-based audio sandboxing.</p>
+          </div>
+
+          {/* Domain / Production Use Case Dropdown */}
+          <div className="space-y-1.5 p-3 rounded-xl bg-zinc-950/80 border border-indigo-500/30 shadow-sm shadow-indigo-500/5">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5 text-indigo-400">
+                <Layers className="w-3.5 h-3.5" />
+                Domain / Use Case
+              </label>
+              <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-semibold">
+                6 Active
+              </span>
+            </div>
+            <select 
+              value={selectedDomainId}
+              onChange={(e) => selectDomain(e.target.value)}
+              disabled={isSimulating}
+              className="w-full text-xs font-semibold px-2.5 py-2 bg-zinc-900 rounded-lg border border-zinc-750 focus:border-indigo-500 focus:outline-none text-zinc-100 cursor-pointer disabled:opacity-50"
+            >
+              {DOMAINS_CONFIG.map(d => (
+                <option key={d.id} value={d.id}>
+                  {d.emoji} {d.name}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-0.5">
+              <span>Active: <strong className="text-zinc-300 font-medium">{currentDomain.shortName}</strong></span>
+              <span className="font-mono text-indigo-400 font-semibold">v{selectedVersion?.versionNumber}</span>
+            </div>
           </div>
 
           {/* Model Configuration */}
@@ -112,20 +157,36 @@ export const SimulatorPage: React.FC = () => {
 
           {/* Prompt Version selector */}
           <div className="space-y-2">
-            <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
-              Target Prompt Version
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+                Target Prompt Version
+              </label>
+              <span className="text-[9px] font-mono text-zinc-500">
+                {domainVersions.length} in this domain
+              </span>
+            </div>
             <select 
               value={activeVersionId}
               onChange={(e) => setActiveVersionId(e.target.value)}
               disabled={isSimulating}
               className="w-full text-xs px-3 py-2 bg-zinc-950 rounded border border-zinc-800 focus:outline-none focus:border-zinc-700 text-zinc-300 font-mono disabled:opacity-50 cursor-pointer"
             >
-              {versions.map(v => (
-                <option key={v.id} value={v.id}>
-                  Version v{v.versionNumber} ({v.changeDescription.substring(0, 20)}...)
-                </option>
-              ))}
+              <optgroup label={`── ${currentDomain.shortName} Versions ──`}>
+                {domainVersions.map(v => (
+                  <option key={v.id} value={v.id}>
+                    Version v{v.versionNumber} ({v.changeDescription.substring(0, 22)}...)
+                  </option>
+                ))}
+              </optgroup>
+              {otherVersions.length > 0 && (
+                <optgroup label="── Other Domains ──">
+                  {otherVersions.map(v => (
+                    <option key={v.id} value={v.id}>
+                      Version v{v.versionNumber} ({v.changeDescription.substring(0, 22)}...)
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
@@ -220,8 +281,13 @@ export const SimulatorPage: React.FC = () => {
                 Analyze & Evolve Prompt
               </button>
             )}
-            <div className="text-[10px] font-mono text-zinc-500">
-              Prompt: v{selectedVersion?.versionNumber} | Persona: {selectedTestCase?.name}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">
+                {currentDomain.emoji} {currentDomain.shortName}
+              </span>
+              <div className="text-[10px] font-mono text-zinc-500">
+                Prompt: v{selectedVersion?.versionNumber} | Persona: {selectedTestCase?.name}
+              </div>
             </div>
           </div>
         </div>

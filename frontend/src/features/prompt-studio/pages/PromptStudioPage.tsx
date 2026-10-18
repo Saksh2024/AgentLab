@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '../../../store/useAppStore';
 import { FormField, Input, Select } from '../../../components/ui/FormComponents';
+import { 
+  DOMAINS_CONFIG, 
+  detectDomainFromPrompt 
+} from '../../../services/mockDb';
 import { 
   Sparkles, 
   FileCode, 
   Loader2, 
   AlertTriangle,
-  GitCommit
+  GitCommit,
+  Layers,
+  CheckCircle2,
+  Play
 } from 'lucide-react';
 import { API_BASE } from '../../../config';
 
@@ -24,15 +32,25 @@ interface GeneratedResult {
 }
 
 export const PromptStudioPage: React.FC = () => {
-  const { versions, createNewPromptVersion, setActiveVersionId, fetchVersions, saveEvolvedVersion } = useAppStore();
+  const navigate = useNavigate();
+  const { 
+    versions, 
+    selectedDomainId, 
+    selectDomain, 
+    createNewPromptVersion, 
+    setActiveVersionId, 
+    fetchVersions,
+    saveEvolvedVersion
+  } = useAppStore();
 
+  const currentDomain = DOMAINS_CONFIG.find(d => d.id === selectedDomainId) || DOMAINS_CONFIG[0];
   
   // React Hook Form setup
-  const { register, handleSubmit, formState: { errors } } = useForm<PromptInputs>({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<PromptInputs>({
     defaultValues: {
-      useCase: 'travel app- hotel booking end to end support',
-      language: 'English',
-      tone: 'Empathetic, clear, and professional'
+      useCase: currentDomain.useCase,
+      language: currentDomain.language,
+      tone: currentDomain.tone
     }
   });
 
@@ -41,6 +59,46 @@ export const PromptStudioPage: React.FC = () => {
   const [systemPromptEdit, setSystemPromptEdit] = useState('');
   const [changeNote, setChangeNote] = useState('Evolved via studio compiler.');
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Sync form and preview when selectedDomainId changes or on initial mount
+  useEffect(() => {
+    const domain = DOMAINS_CONFIG.find(d => d.id === selectedDomainId) || DOMAINS_CONFIG[0];
+    setValue('useCase', domain.useCase);
+    setValue('language', domain.language);
+    setValue('tone', domain.tone);
+
+    const matchingVersions = versions.filter(v => 
+      v.promptId === domain.promptId || 
+      detectDomainFromPrompt(v.systemPrompt, v.promptId) === domain.id
+    );
+    const targetVer = matchingVersions[matchingVersions.length - 1] || 
+      versions.find(v => v.id === domain.defaultVersionId) || 
+      versions[0];
+
+    if (targetVer) {
+      setGeneratedData({
+        systemPrompt: targetVer.systemPrompt,
+        conversationFlow: targetVer.conversationFlow || [
+          `1. Warm greeting and customer intent discovery`,
+          `2. Identify domain context and policy validation`,
+          `3. Provide accurate guidance within 2-3 sentences`,
+          `4. Hospitable resolution confirmation`
+        ],
+        edgeCases: targetVer.edgeCases || [
+          { scenario: 'Missing primary code', behavior: 'Execute fallback verification using registered name & phone.' }
+        ]
+      });
+      setSystemPromptEdit(targetVer.systemPrompt);
+      setChangeNote(targetVer.changeDescription);
+    }
+  }, [selectedDomainId, versions]);
+
+  const handleDomainDropdownChange = (domainId: string) => {
+    if (domainId === 'custom') {
+      return;
+    }
+    selectDomain(domainId);
+  };
 
   // Form submit: Calls POST /api/v1/prompts/generate
   const onSubmit = async (data: PromptInputs) => {
@@ -205,6 +263,34 @@ export const PromptStudioPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Preset Enterprise Domain Switcher Dropdown */}
+        <div className="p-4 rounded-xl bg-zinc-950/90 border border-indigo-500/30 space-y-2.5 shadow-sm shadow-indigo-500/5">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5 text-indigo-400">
+              <Layers className="w-3.5 h-3.5" />
+              Domain / Production Use Case
+            </label>
+            <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-semibold">
+              Instant Switch • No Gen Needed
+            </span>
+          </div>
+          <select 
+            value={selectedDomainId}
+            onChange={(e) => handleDomainDropdownChange(e.target.value)}
+            className="w-full text-xs font-semibold px-3 py-2.5 bg-zinc-900 rounded-lg border border-zinc-750 focus:border-indigo-500 focus:outline-none text-zinc-100 cursor-pointer"
+          >
+            {DOMAINS_CONFIG.map(d => (
+              <option key={d.id} value={d.id}>
+                {d.emoji} {d.name}
+              </option>
+            ))}
+            <option value="custom">✏️ Custom Freeform Domain...</option>
+          </select>
+          <p className="text-[11px] text-zinc-500 leading-snug">
+            Selecting a domain instantly loads its compiled voice guidelines and test personas without requiring you to re-compile.
+          </p>
+        </div>
+
         {/* Form elements using React Hook Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <FormField label="Use Case / Application Domain" error={errors.useCase}>
@@ -251,7 +337,7 @@ export const PromptStudioPage: React.FC = () => {
             ) : (
               <>
                 <Sparkles className="w-4 h-4 text-indigo-200" />
-                Generate Tailored Prompt
+                Re-Generate Tailored Prompt with AI
               </>
             )}
           </button>
@@ -273,16 +359,40 @@ export const PromptStudioPage: React.FC = () => {
             </span>
             <span className="text-[10px] font-mono text-zinc-500">{versions.length} versions in SQLite</span>
           </div>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {versions.slice().reverse().map(v => (
-              <div key={v.id} className="p-2.5 rounded-lg border border-zinc-850/80 bg-zinc-900/40 text-xs flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-zinc-200">Version v{v.versionNumber}</span>
-                  <p className="text-[10px] text-zinc-500 truncate max-w-[280px]">{v.changeDescription}</p>
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            {versions.slice().reverse().map(v => {
+              const domId = detectDomainFromPrompt(v.systemPrompt, v.promptId);
+              const domObj = DOMAINS_CONFIG.find(d => d.id === domId);
+              return (
+                <div 
+                  key={v.id} 
+                  onClick={() => {
+                    setActiveVersionId(v.id);
+                    setSystemPromptEdit(v.systemPrompt);
+                    setChangeNote(v.changeDescription);
+                    setGeneratedData({
+                      systemPrompt: v.systemPrompt,
+                      conversationFlow: v.conversationFlow || [],
+                      edgeCases: v.edgeCases || []
+                    });
+                  }}
+                  className="p-2.5 rounded-lg border border-zinc-850/80 bg-zinc-900/40 hover:bg-zinc-850/70 hover:border-zinc-700 transition-all text-xs flex items-center justify-between cursor-pointer group"
+                >
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-zinc-200 group-hover:text-white">v{v.versionNumber}</span>
+                      {domObj && (
+                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-750">
+                          {domObj.emoji} {domObj.shortName}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-500 truncate mt-0.5">{v.changeDescription}</p>
+                  </div>
+                  <span className="text-[9px] font-mono text-zinc-600 shrink-0">{new Date(v.createdAt).toLocaleDateString()}</span>
                 </div>
-                <span className="text-[9px] font-mono text-zinc-600">{new Date(v.createdAt).toLocaleDateString()}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -291,11 +401,34 @@ export const PromptStudioPage: React.FC = () => {
       <div className="w-1/2 p-8 overflow-y-auto space-y-6">
         <div className="space-y-1 text-left">
           <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">Compiler Outputs</div>
-          <h2 className="text-lg font-bold text-zinc-100">Generated Voice Agent Assets</h2>
+          <h2 className="text-lg font-bold text-zinc-100">Compiled Voice Agent Assets</h2>
         </div>
 
         {generatedData ? (
           <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Domain Active Status Bar & Quick Jump to Simulator */}
+            <div className="p-3.5 bg-indigo-500/10 border border-indigo-500/25 rounded-xl flex items-center justify-between gap-3 shadow-sm">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-white block truncate">
+                    {currentDomain.emoji} {currentDomain.name}
+                  </span>
+                  <span className="text-[10px] text-zinc-400 font-mono">
+                    Active guidelines loaded • Ready to simulate
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/simulator')}
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+              >
+                <Play className="w-3 h-3" />
+                Open in Simulator Deck
+              </button>
+            </div>
+
             {/* System Prompt Block */}
             <div className="p-5 border border-zinc-800 rounded-xl bg-zinc-950/80 space-y-3 shadow-lg">
               <div className="flex items-center justify-between">
@@ -304,7 +437,7 @@ export const PromptStudioPage: React.FC = () => {
                   Compiled System Instructions
                 </span>
                 <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  Ready to Commit
+                  Ready to Commit / Simulate
                 </span>
               </div>
               <textarea 
@@ -369,7 +502,7 @@ export const PromptStudioPage: React.FC = () => {
             <Sparkles className="w-8 h-8 text-zinc-600" />
             <span className="text-xs text-zinc-400">No prompt compiled yet.</span>
             <p className="text-[11px] text-zinc-550 max-w-xs">
-              Fill in your target use case domain on the left and click <strong>Generate Tailored Prompt</strong> to compile custom voice instructions.
+              Select any domain from the dropdown above to immediately load its instructions, or click <strong>Re-Generate</strong> to compile new ones.
             </p>
           </div>
         )}

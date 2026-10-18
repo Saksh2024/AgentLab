@@ -63,9 +63,13 @@ async def run_multi_domain_verification():
     print("AGENTLAB - MULTI-DOMAIN DIAGNOSTIC & HEURISTIC COMPILER SUITE")
     print("=" * 80)
 
-    client = OpenAIClient()
+    use_live = "--live" in sys.argv
+    client = OpenAIClient(api_key="" if not use_live else None)
     prompt_service = PromptService()
+    # Ensure underlying client uses offline mode if requested
+    prompt_service.llm_client = client
     analyzer_service = AnalyzerService()
+    analyzer_service.llm_client = client
 
     passed_count = 0
     total_count = len(DOMAINS_TO_TEST)

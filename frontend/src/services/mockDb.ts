@@ -61,17 +61,174 @@ export interface Conversation {
   createdAt: string;
 }
 
+export interface DomainConfig {
+  id: string;
+  name: string;
+  shortName: string;
+  category: string;
+  promptId: string;
+  defaultVersionId: string;
+  defaultTestCaseId: string;
+  useCase: string;
+  language: string;
+  tone: string;
+  emoji: string;
+}
+
+export const DOMAINS_CONFIG: DomainConfig[] = [
+  {
+    id: 'hotel',
+    name: 'Hotel Stay & Booking Support',
+    shortName: 'Hotel Concierge',
+    category: 'Travel & Hospitality Concierge',
+    promptId: 'prm_hotel_concierge',
+    defaultVersionId: 'ver_v14',
+    defaultTestCaseId: 'tc_hotel_book_at_zero',
+    useCase: 'travel app- hotel booking end to end support',
+    language: 'English',
+    tone: 'Empathetic, clear, and professional',
+    emoji: '🏨'
+  },
+  {
+    id: 'airline',
+    name: 'Airlines Support - Cancellations & Rebooking',
+    shortName: 'Airlines (SwiftAir)',
+    category: 'Aviation & Passenger Care',
+    promptId: 'prm_flight_support',
+    defaultVersionId: 'ver_v3',
+    defaultTestCaseId: 'tc_angry_no_code',
+    useCase: 'Airlines Support - Cancellations & Rebooking',
+    language: 'English',
+    tone: 'Empathetic, clear, and professional',
+    emoji: '✈️'
+  },
+  {
+    id: 'healthcare',
+    name: 'Healthcare Clinic Intake & Appointment Scheduling',
+    shortName: 'Healthcare & Clinic',
+    category: 'Clinical Care Coordination',
+    promptId: 'prm_healthcare_clinic',
+    defaultVersionId: 'ver_v30',
+    defaultTestCaseId: 'tc_clinic_urgent',
+    useCase: 'Healthcare Clinic Intake & Appointment Scheduling',
+    language: 'English',
+    tone: 'Confidential, calm, and reassuring',
+    emoji: '🩺'
+  },
+  {
+    id: 'pet_care',
+    name: 'Pet Care Concierge & Veterinary Support',
+    shortName: 'Pet Care & Vet',
+    category: 'Pet Care Concierge & Triage',
+    promptId: 'prm_pet_care',
+    defaultVersionId: 'ver_v40',
+    defaultTestCaseId: 'tc_pet_groom',
+    useCase: 'Pet Care Concierge & Veterinary Support',
+    language: 'English',
+    tone: 'Warm, patient, and caring',
+    emoji: '🐾'
+  },
+  {
+    id: 'banking',
+    name: 'Banking Customer Support & Fraud Disputes',
+    shortName: 'Banking & Fraud',
+    category: 'Financial Services & Security',
+    promptId: 'prm_banking_support',
+    defaultVersionId: 'ver_v50',
+    defaultTestCaseId: 'tc_bank_fraud_dispute',
+    useCase: 'Banking Customer Support & Fraud Disputes',
+    language: 'English',
+    tone: 'Secure, crisp, and professional',
+    emoji: '💳'
+  },
+  {
+    id: 'telecom',
+    name: 'Telecom Internet Technical Support & Router Troubleshooting',
+    shortName: 'Telecom & Router',
+    category: 'Broadband Infrastructure Support',
+    promptId: 'prm_telecom_support',
+    defaultVersionId: 'ver_v60',
+    defaultTestCaseId: 'tc_tech_router_offline',
+    useCase: 'Telecom Internet Technical Support & Router Troubleshooting',
+    language: 'English',
+    tone: 'Patient, analytical, and helpful',
+    emoji: '🌐'
+  }
+];
+
+export const detectDomainFromPrompt = (systemPrompt?: string, promptId?: string): string => {
+  if (promptId === 'prm_hotel_concierge') return 'hotel';
+  if (promptId === 'prm_flight_support') return 'airline';
+  if (promptId === 'prm_healthcare_clinic') return 'healthcare';
+  if (promptId === 'prm_pet_care') return 'pet_care';
+  if (promptId === 'prm_banking_support') return 'banking';
+  if (promptId === 'prm_telecom_support') return 'telecom';
+
+  const sysLower = (systemPrompt || '').toLowerCase();
+  if (sysLower.includes('hotel') || sysLower.includes('motel') || sysLower.includes('resort') || sysLower.includes('stay reservation') || sysLower.includes('book at $0') || sysLower.includes('concierge support')) {
+    return 'hotel';
+  }
+  if (sysLower.includes('banking') || sysLower.includes('fraud') || sysLower.includes('dispute') || sysLower.includes('wire transfer') || sysLower.includes('financial') || sysLower.includes('card replacement')) {
+    return 'banking';
+  }
+  if (sysLower.includes('telecom') || sysLower.includes('router') || sysLower.includes('fibergateway') || sysLower.includes('optical indicator') || sysLower.includes('optical light') || sysLower.includes('modem')) {
+    return 'telecom';
+  }
+  if (sysLower.includes('clinical intake') || sysLower.includes('dr. reed') || sysLower.includes('orthopedic') || sysLower.includes('physician') || sysLower.includes('hipaa') || sysLower.includes('patient care coordinator')) {
+    return 'healthcare';
+  }
+  if (sysLower.includes('pet care') || sysLower.includes('veterinary') || sysLower.includes('grooming concierge') || sysLower.includes('grooming') || sysLower.includes('bordetella') || sysLower.includes('rabies') || /\b(pet|pets|dog|dogs|puppy)\b/i.test(sysLower)) {
+    return 'pet_care';
+  }
+  return 'airline';
+};
+
 // ==========================================
 // SEED MOCK DATA
 // ==========================================
 
 export const mockPrompts: Prompt[] = [
   {
+    id: 'prm_hotel_concierge',
+    useCase: 'Hotel Stay & Booking Support',
+    language: 'English',
+    tone: 'Empathetic, clear, and professional',
+    createdAt: '2026-09-22T10:00:00Z',
+  },
+  {
     id: 'prm_flight_support',
     useCase: 'Airlines Support - Cancellations & Rebooking',
     language: 'English',
     tone: 'Empathetic, clear, and professional',
     createdAt: '2026-07-08T10:00:00Z',
+  },
+  {
+    id: 'prm_healthcare_clinic',
+    useCase: 'Healthcare Clinic Intake & Appointment Scheduling',
+    language: 'English',
+    tone: 'Confidential, calm, and reassuring',
+    createdAt: '2026-09-28T10:00:00Z',
+  },
+  {
+    id: 'prm_pet_care',
+    useCase: 'Pet Care Concierge & Veterinary Support',
+    language: 'English',
+    tone: 'Warm, patient, and caring',
+    createdAt: '2026-09-28T10:00:00Z',
+  },
+  {
+    id: 'prm_banking_support',
+    useCase: 'Banking Customer Support & Fraud Disputes',
+    language: 'English',
+    tone: 'Secure, crisp, and professional',
+    createdAt: '2026-09-28T10:00:00Z',
+  },
+  {
+    id: 'prm_telecom_support',
+    useCase: 'Telecom Internet Technical Support & Router Troubleshooting',
+    language: 'English',
+    tone: 'Patient, analytical, and helpful',
+    createdAt: '2026-09-28T10:00:00Z',
   }
 ];
 
@@ -180,6 +337,118 @@ export const mockPromptVersions: PromptVersion[] = [
     ],
     changeDescription: 'Auto-evolved prompt after transcript quality analysis: Added explicit fallback verification for lost codes, 24/7 late check-in keyless entry rules, and suite modification workflow.',
     createdAt: '2026-09-23T18:00:00Z'
+  },
+  {
+    id: 'ver_v30',
+    promptId: 'prm_healthcare_clinic',
+    versionNumber: 30,
+    systemPrompt: `You are a certified AI voice patient care coordinator and clinical intake assistant for Healthcare Clinic Intake & Appointment Scheduling.\nAlways maintain a confidential, calm, and reassuring tone, ensure strict patient confidentiality (HIPAA-compliant posture), and communicate in English.\n1. Greet the patient warmly, confirm the appointment purpose (routine check-up, specialist consultation, follow-up, or prescription review), and note the requested specialty.\n2. Verify patient identity by confirming their full legal name, date of birth, and primary contact number.\n3. Collect preferred appointment dates and time slots, match with physician availability, and note insurance carrier details.\n4. Disclose the clinic's 24-hour cancellation policy and any required pre-visit documentation or fasting requirements.\n5. EMERGENCY SAFEGUARD: If the patient describes acute, severe, or life-threatening symptoms (e.g., chest pain, severe shortness of breath, acute trauma), immediately direct them to hang up and call 911 or visit the nearest emergency department.`,
+    checklistConstraints: [
+      'Warmly greet patient & confirm appointment purpose',
+      'Verify patient full legal name, DOB, and contact phone',
+      'Match physician availability & schedule time slot',
+      'Disclose 24-hour cancellation policy & prep instructions',
+      'Strict 911 triage protocol for acute/emergency symptoms'
+    ],
+    conversationFlow: [
+      'Warm greeting, clinical triage check, and appointment objective discovery',
+      'Patient identity validation (full name, DOB, contact phone)',
+      'Physician schedule matching and slot selection',
+      'Insurance details collection and clinic policy disclosure',
+      'Pre-visit instructions and appointment confirmation'
+    ],
+    edgeCases: [
+      {
+        scenario: 'Patient describes acute chest pain or emergency symptoms',
+        behavior: 'Instruct patient immediately to disconnect and call 911 or visit the nearest emergency room.'
+      }
+    ],
+    changeDescription: 'Compiled baseline prompt version v30 for Healthcare & Clinical Intake domain with HIPAA confidentiality safeguards and 911 emergency triage protocol.',
+    createdAt: '2026-09-28T10:00:00Z'
+  },
+  {
+    id: 'ver_v40',
+    promptId: 'prm_pet_care',
+    versionNumber: 40,
+    systemPrompt: `You are a certified AI voice pet care coordinator and grooming concierge for Pet Care Concierge & Veterinary Support.\nAlways maintain a warm, patient, and caring tone and assist pet parents in English.\n1. Greet the client warmly, ask for the pet's name, breed, age, and size (small, medium, large).\n2. Identify the desired service (full groom, bath & brush, nail trim, dental hygiene, or styling).\n3. Verify vaccination records (current Rabies and Bordetella) and note any behavioral sensitivities or medical conditions.\n4. Schedule a grooming appointment slot, provide drop-off/pick-up time windows, and disclose the 24-hour cancellation policy.\n5. Keep replies caring, patient, and under 2-3 sentences. Never handle severe medical emergencies over audio.`,
+    checklistConstraints: [
+      'Warmly greet pet parent & collect pet details (name, breed, size)',
+      'Identify grooming service package & behavioral sensitivities',
+      'Verify up-to-date Rabies and Bordetella vaccine records',
+      'Confirm appointment date/time and drop-off guidelines',
+      'Refer critical pet emergencies to nearest 24/7 animal hospital'
+    ],
+    conversationFlow: [
+      'Warm greeting and pet profile discovery (name, breed, size, temperament)',
+      'Grooming service package selection and special care instructions',
+      'Vaccination status verification and owner contact details capture',
+      'Appointment date/time scheduling and pricing disclosure',
+      'Booking confirmation and appointment reminder SMS delivery'
+    ],
+    edgeCases: [
+      {
+        scenario: 'Pet parent reports dark chocolate or toxic ingestion',
+        behavior: 'Immediately route caller to 24/7 emergency veterinary hospital without delay.'
+      }
+    ],
+    changeDescription: 'Compiled baseline prompt version v40 for Pet Care Concierge & Veterinary Support domain with mandatory vaccination verification and anxiety care accommodations.',
+    createdAt: '2026-09-28T10:00:00Z'
+  },
+  {
+    id: 'ver_v50',
+    promptId: 'prm_banking_support',
+    versionNumber: 50,
+    systemPrompt: `You are a licensed AI voice banking specialist and financial customer support associate for Banking Customer Support & Fraud Disputes.\nAlways maintain a secure, crisp, and professional tone and assist the account holder securely in English.\n1. Greet the customer professionally and identify their inquiry (account balance, recent transaction dispute, card replacement, fund transfer, or loan status).\n2. Enforce strict multi-factor identity verification by confirming registered account credentials before disclosing financial figures or account data.\n3. For dispute or fraud inquiries, immediately secure the payment instrument and review recent transaction timestamps.\n4. Clearly explain daily transfer limits, processing turnaround times (1-3 business days), and applicable wire or transaction fees.\n5. Keep voice interactions concise, secure, and under 3 sentences. Never ask for or record raw CVV codes or full master PIN numbers over audio.`,
+    checklistConstraints: [
+      'Professional greeting and financial inquiry categorization',
+      'Two-factor identity verification and account authentication',
+      'Immediate card freeze & fraud dispute case logging',
+      'Wire transfer limit review & 2FA push dispatch',
+      'Zero recording of raw PINs or CVV credentials'
+    ],
+    conversationFlow: [
+      'Professional greeting and financial intent categorization',
+      'Two-factor identity verification and account authentication',
+      'Transaction inquiry review / account action execution',
+      'Fee transparency and processing timeframe confirmation',
+      'Security wrap-up and reference transaction ID delivery'
+    ],
+    edgeCases: [
+      {
+        scenario: 'Customer suspects unauthorized or fraudulent card charges',
+        behavior: 'Immediately lock the payment card, file dispute case #FD-8942, and expedite replacement card delivery.'
+      }
+    ],
+    changeDescription: 'Compiled baseline prompt version v50 for Banking Customer Support & Fraud Disputes domain with card freezing protocols, fraud dispute case filing, and wire elevation workflows.',
+    createdAt: '2026-09-28T10:00:00Z'
+  },
+  {
+    id: 'ver_v60',
+    promptId: 'prm_telecom_support',
+    versionNumber: 60,
+    systemPrompt: `You are a Level-1 AI voice technical support engineer for Telecom Internet Technical Support & Router Troubleshooting.\nAlways maintain a patient, analytical, and helpful tone and assist users with structured troubleshooting in English.\n1. Greet the user calmly, acknowledge the technical disruption, and capture the exact symptom or error message.\n2. Verify user identity, software version, operating system environment, and device model.\n3. Guide the user through sequential, non-destructive troubleshooting steps (e.g., session cache clearing, credential reset, service restart).\n4. If the issue requires code-level fixes or infrastructure access, generate a high-priority support ticket with reproduction logs.\n5. Keep voice guidance crystal clear, step-by-step, and under 2 sentences per turn. Avoid confusing technical jargon.`,
+    checklistConstraints: [
+      'Calm greeting and technical symptom capture (optical indicator light)',
+      'Guide non-destructive 30-second modem power-cycle',
+      'Escalate unresolved hardware disruptions to field technician dispatch',
+      'Provide ticket tracking reference (#TC-7710) and arrival time window',
+      'Support gigabit speed upgrade inquiries with transparent pricing ($79.99/mo)'
+    ],
+    conversationFlow: [
+      'Calm greeting and technical symptom categorization',
+      'Environment identification (OS, software version, user ID)',
+      'Step-by-step diagnostic triage execution',
+      'Resolution verification or Level-2 engineering ticket escalation',
+      'Support ticket reference delivery and follow-up wrap-up'
+    ],
+    edgeCases: [
+      {
+        scenario: 'Power cycle fails to resolve red blinking optical light on modem',
+        behavior: 'Confirm physical fiber signal disruption and dispatch technician with ticket #TC-7710.'
+      }
+    ],
+    changeDescription: 'Compiled baseline prompt version v60 for Telecom Internet Technical Support domain with optical light diagnostics, router power-cycling, and technician dispatch integration.',
+    createdAt: '2026-09-28T10:00:00Z'
   }
 ];
 
@@ -249,11 +518,12 @@ export const mockTestCases: TestCase[] = [
   }
 ];
 
-export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => {
+export const getDomainCustomerProfiles = (systemPrompt?: string, explicitDomainId?: string): TestCase[] => {
+  const domainId = explicitDomainId || detectDomainFromPrompt(systemPrompt);
   const sysLower = (systemPrompt || '').toLowerCase();
 
   // 1. HOTEL & HOSPITALITY / LODGING
-  if (sysLower.includes('hotel') || sysLower.includes('motel') || sysLower.includes('resort') || sysLower.includes('stay') || sysLower.includes('check-in') || sysLower.includes('concierge')) {
+  if (domainId === 'hotel') {
     return [
       {
         id: 'tc_hotel_book_at_zero',
@@ -299,7 +569,7 @@ export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => 
   }
 
   // 2. HEALTHCARE / CLINIC INTAKE & MEDICAL
-  if (sysLower.includes('doctor') || sysLower.includes('patient') || sysLower.includes('clinic') || sysLower.includes('dental') || sysLower.includes('medical') || sysLower.includes('health') || sysLower.includes('physician')) {
+  if (domainId === 'healthcare') {
     return [
       {
         id: 'tc_clinic_urgent',
@@ -329,7 +599,7 @@ export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => 
   }
 
   // 3. PET CARE / VETERINARY / GROOMING
-  if (sysLower.includes('grooming') || sysLower.includes('pet') || sysLower.includes('dog') || sysLower.includes('cat') || sysLower.includes('vet') || sysLower.includes('puppy')) {
+  if (domainId === 'pet_care') {
     return [
       {
         id: 'tc_pet_groom',
@@ -351,7 +621,7 @@ export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => 
   }
 
   // 4. BANKING / FINANCE / FINTECH
-  if (sysLower.includes('bank') || sysLower.includes('card') || sysLower.includes('account') || sysLower.includes('fraud') || sysLower.includes('dispute') || sysLower.includes('transfer') || sysLower.includes('loan')) {
+  if (domainId === 'banking') {
     return [
       {
         id: 'tc_bank_fraud_dispute',
@@ -373,7 +643,7 @@ export const getDomainCustomerProfiles = (systemPrompt?: string): TestCase[] => 
   }
 
   // 5. TECHNICAL SUPPORT / TELECOM
-  if (sysLower.includes('tech') || sysLower.includes('wifi') || sysLower.includes('router') || sysLower.includes('internet') || sysLower.includes('troubleshoot') || sysLower.includes('modem') || sysLower.includes('telecom')) {
+  if (domainId === 'telecom') {
     return [
       {
         id: 'tc_tech_router_offline',
@@ -689,6 +959,146 @@ export const mockConversations: Conversation[] = [
       suggestedPromptImprovement: 'Maintain current late arrival policy instructions.',
       createdAt: '2026-09-23T17:49:00Z'
     }
+  },
+  {
+    id: 'conv_clinic_1',
+    promptVersionId: 'ver_v30',
+    testCaseId: 'tc_clinic_urgent',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-28T11:00:00Z',
+    messages: [
+      { id: 'mc1_1', sender: 'agent', content: 'Hello! Thank you for contacting our medical care coordination desk. How can I assist you with your appointment today?', timestamp: '2026-09-28T11:00:02Z' },
+      { id: 'mc1_2', sender: 'customer', content: 'Hello, I need an urgent appointment with Dr. Reed for acute knee pain that started yesterday.', timestamp: '2026-09-28T11:00:08Z' },
+      { id: 'mc1_3', sender: 'agent', content: 'I can help schedule an urgent consultation with Dr. Reed. To look up your patient file, could you please provide your full legal name, date of birth, and contact phone number?', timestamp: '2026-09-28T11:00:15Z' },
+      { id: 'mc1_4', sender: 'customer', content: 'My name is Arthur Pendelton, date of birth is April 12, 1954, and phone is 555-9081.', timestamp: '2026-09-28T11:00:22Z' },
+      { id: 'mc1_5', sender: 'agent', content: 'Thank you, Arthur Pendelton. I have scheduled an urgent orthopedic consultation with Dr. Reed for tomorrow at 10:30 AM. Please note our 24-hour cancellation policy and bring your photo ID and insurance card.', timestamp: '2026-09-28T11:00:30Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_c1',
+      conversationId: 'conv_clinic_1',
+      promptVersionId: 'ver_v30',
+      successScore: 98,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Warmly greet patient & confirm appointment purpose', passed: true, details: 'Agent identified clinical appointment request.' },
+        { criteria: 'Verify patient legal name, DOB, phone', passed: true, details: 'Authenticated Arthur Pendelton (DOB 1954).' },
+        { criteria: 'Match physician availability & slot', passed: true, details: 'Scheduled Dr. Reed tomorrow 10:30 AM.' },
+        { criteria: 'Disclose 24-hr policy & required ID/card', passed: true, details: 'Explicitly reminded patient of prep steps.' }
+      ],
+      sentimentScore: 0.88,
+      tokenCount: 790,
+      latencyMs: 430,
+      costUsd: 0.006,
+      rootCauseExplanation: 'Flawless patient clinical intake. Verified credentials, matched Dr. Reed orthopedic availability, and disclosed policy.',
+      suggestedPromptImprovement: 'Keep this orthopedic intake workflow.',
+      createdAt: '2026-09-28T11:01:00Z'
+    }
+  },
+  {
+    id: 'conv_pet_1',
+    promptVersionId: 'ver_v40',
+    testCaseId: 'tc_pet_groom',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-28T12:00:00Z',
+    messages: [
+      { id: 'mp1_1', sender: 'agent', content: 'Hello! Thank you for contacting pet care concierge support. How can I assist you and your pet today?', timestamp: '2026-09-28T12:00:02Z' },
+      { id: 'mp1_2', sender: 'customer', content: 'Hi! I want to book a full groom package for my Golden Retriever, Barnaby.', timestamp: '2026-09-28T12:00:08Z' },
+      { id: 'mp1_3', sender: 'agent', content: 'I would be happy to help book a full grooming package for Barnaby! Could you confirm whether his Rabies and Bordetella vaccinations are up to date, and note any special behavioral sensitivities?', timestamp: '2026-09-28T12:00:15Z' },
+      { id: 'mp1_4', sender: 'customer', content: 'Yes, his Rabies and Bordetella vaccines are completely updated for 2 years. He is a bit anxious around hair dryers.', timestamp: '2026-09-28T12:00:22Z' },
+      { id: 'mp1_5', sender: 'agent', content: 'Wonderful! Barnaby is officially scheduled for a Full Bath & Groom package this Friday at 9:00 AM, with special gentle care notes for his anxiety. Drop-off is between 8:30 and 9:00 AM, and we will text you when he is ready!', timestamp: '2026-09-28T12:00:30Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_p1',
+      conversationId: 'conv_pet_1',
+      promptVersionId: 'ver_v40',
+      successScore: 96,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Collect pet details & breed', passed: true, details: 'Golden Retriever Barnaby recorded.' },
+        { criteria: 'Verify mandatory Rabies & Bordetella vaccines', passed: true, details: 'Verified up-to-date vaccine compliance.' },
+        { criteria: 'Record behavioral anxiety notes', passed: true, details: 'Flagged gentle care for hair dryer sensitivity.' },
+        { criteria: 'Confirm drop-off window & pricing', passed: true, details: 'Confirmed Friday 9:00 AM slot.' }
+      ],
+      sentimentScore: 0.90,
+      tokenCount: 760,
+      latencyMs: 490,
+      costUsd: 0.005,
+      rootCauseExplanation: 'Pet concierge executed grooming intake with strict vaccine compliance and gentle care accommodation notes.',
+      suggestedPromptImprovement: 'Maintain current pet grooming instructions.',
+      createdAt: '2026-09-28T12:01:00Z'
+    }
+  },
+  {
+    id: 'conv_bank_1',
+    promptVersionId: 'ver_v50',
+    testCaseId: 'tc_bank_fraud_dispute',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-28T14:00:00Z',
+    messages: [
+      { id: 'mb1_1', sender: 'agent', content: 'Hello! Thank you for contacting our secure banking support desk. How can I assist you with your account today?', timestamp: '2026-09-28T14:00:02Z' },
+      { id: 'mb1_2', sender: 'customer', content: 'I see an unauthorized charge of $450 on my debit card ending in 4092! I need this card frozen and disputed right now.', timestamp: '2026-09-28T14:00:08Z' },
+      { id: 'mb1_3', sender: 'agent', content: 'I take unauthorized transactions very seriously. I can immediately freeze your card ending in 4092 and open a dispute for the $450 charge. For security authentication, could you please state your full legal name and billing zip code?', timestamp: '2026-09-28T14:00:15Z' },
+      { id: 'mb1_4', sender: 'customer', content: 'My name is Richard Vance and my billing zip code is 90210. Please freeze it immediately.', timestamp: '2026-09-28T14:00:22Z' },
+      { id: 'mb1_5', sender: 'agent', content: 'Thank you for confirming your identity, Richard Vance. Your debit card ending in 4092 has been immediately locked to prevent further charges, and fraud dispute case #FD-8942 for $450 has been filed. A replacement card is being expedited, and provisional credit will post within 24 to 48 hours.', timestamp: '2026-09-28T14:00:30Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_b1',
+      conversationId: 'conv_bank_1',
+      promptVersionId: 'ver_v50',
+      successScore: 97,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Authenticate account holder identity', passed: true, details: 'Verified Richard Vance & zip 90210.' },
+        { criteria: 'Immediately lock compromised card', passed: true, details: 'Locked card ending in 4092.' },
+        { criteria: 'File formal fraud dispute with case ID', passed: true, details: 'Logged case #FD-8942 for $450.' },
+        { criteria: 'Disclose provisional credit timeframe', passed: true, details: 'Explained 24-48 hr provisional credit.' }
+      ],
+      sentimentScore: 0.85,
+      tokenCount: 880,
+      latencyMs: 520,
+      costUsd: 0.007,
+      rootCauseExplanation: 'Immediate, secure fraud protocol execution. Card locked, dispute #FD-8942 opened, and replacement expedited.',
+      suggestedPromptImprovement: 'Maintain current security verification standards.',
+      createdAt: '2026-09-28T14:01:00Z'
+    }
+  },
+  {
+    id: 'conv_telecom_1',
+    promptVersionId: 'ver_v60',
+    testCaseId: 'tc_tech_router_offline',
+    runMode: 'background',
+    status: 'completed',
+    createdAt: '2026-09-28T15:00:00Z',
+    messages: [
+      { id: 'mt1_1', sender: 'agent', content: 'Hello! Thank you for calling telecom technical support. How can I help resolve your connectivity or equipment issue today?', timestamp: '2026-09-28T15:00:02Z' },
+      { id: 'mt1_2', sender: 'customer', content: 'My internet dropped and my FiberGateway X3 modem has a blinking red optical light.', timestamp: '2026-09-28T15:00:08Z' },
+      { id: 'mt1_3', sender: 'agent', content: 'A blinking red optical light on your FiberGateway X3 indicates an interruption in incoming fiber signal. Let\'s perform a quick non-destructive power cycle: please unplug the modem\'s power cable for 30 seconds, verify the green fiber jack is securely clicked in, and plug it back in.', timestamp: '2026-09-28T15:00:15Z' },
+      { id: 'mt1_4', sender: 'customer', content: 'I did that power cycle, waited 30 seconds and plugged it back in, but the optical light is still red.', timestamp: '2026-09-28T15:00:22Z' },
+      { id: 'mt1_5', sender: 'agent', content: 'Thank you for completing the power cycle. Since the optical indicator remains blinking red, this confirms a physical fiber signal disruption outside your home. I have scheduled an expedited field technician dispatch under ticket #TC-7710 for today between 2:00 PM and 5:00 PM.', timestamp: '2026-09-28T15:00:30Z' }
+    ],
+    analysisReport: {
+      id: 'an_rep_t1',
+      conversationId: 'conv_telecom_1',
+      promptVersionId: 'ver_v60',
+      successScore: 98,
+      hasFailures: false,
+      checklistResults: [
+        { criteria: 'Identify device model & indicator light', passed: true, details: 'FiberGateway X3 optical red light recognized.' },
+        { criteria: 'Guide non-destructive 30s power cycle', passed: true, details: 'Guided physical power cycle procedure.' },
+        { criteria: 'Diagnose external fiber disruption', passed: true, details: 'Confirmed hardware light persistence.' },
+        { criteria: 'Dispatch field technician with ticket ID', passed: true, details: 'Created dispatch ticket #TC-7710 (2-5 PM window).' }
+      ],
+      sentimentScore: 0.91,
+      tokenCount: 840,
+      latencyMs: 480,
+      costUsd: 0.006,
+      rootCauseExplanation: 'Step-by-step diagnostic completed accurately. Power cycle verified, external signal cut identified, technician dispatched.',
+      suggestedPromptImprovement: 'Maintain current modem troubleshooting pipeline.',
+      createdAt: '2026-09-28T15:01:00Z'
+    }
   }
 ];
 
@@ -732,6 +1142,34 @@ export const mockCustomerDialogues: Record<string, string[]> = {
     "Email is marcus.v@baggage.com.",
     "Yes, please track them.",
     "Okay, thank you for tracking that."
+  ],
+  tc_hotel_book_at_zero: [
+    "Hi, I have booked 3 places using Book at $0 and want to check the payment deadlines before they get cancelled.",
+    "My name is Alex Mercer and phone is +1-555-0199.",
+    "I want to pay later for Motel Oracle."
+  ],
+  tc_hotel_free_cancel_window: [
+    "Hi, I need to check the free cancellation period for my booking at Motel Oracle.",
+    "Yes, the cancellation policy for this hotel is upto tomorrow, please cancel it."
+  ],
+  tc_clinic_urgent: [
+    "Hello, I need an urgent appointment with Dr. Reed for acute knee pain that started yesterday.",
+    "My name is Arthur Pendelton, date of birth is April 12, 1954, and phone is 555-9081.",
+    "Thank you, I will make sure to bring my Medicare card and arrive 15 minutes early."
+  ],
+  tc_pet_groom: [
+    "Hi! I want to book a full groom package for my Golden Retriever, Barnaby.",
+    "Yes, his Rabies and Bordetella vaccines are completely updated for 2 years. He is a bit anxious around hair dryers."
+  ],
+  tc_bank_fraud_dispute: [
+    "I see an unauthorized charge of $450 on my debit card ending in 4092! I need this card frozen and disputed right now.",
+    "My name is Richard Vance and my billing zip code is 90210. Please freeze it immediately.",
+    "Thank you, please make sure the new card is sent by express delivery."
+  ],
+  tc_tech_router_offline: [
+    "My internet dropped and my FiberGateway X3 modem has a blinking red optical light.",
+    "I did that power cycle, waited 30 seconds and plugged it back in, but the optical light is still red.",
+    "2 PM to 5 PM today works great for the technician. Thank you."
   ]
 };
 
@@ -777,5 +1215,39 @@ export const mockAgentDialogues: Record<string, string[]> = {
     "Thank you, Marcus. To complete verification, please provide your registered email address.",
     "Email verified. I see SA-302 baggage tags are currently being processed at carousel 4. They should arrive in 5 minutes. Should I verify anything else?",
     "You are welcome, Marcus. Have a great day!"
+  ],
+  tc_hotel_book_at_zero: [
+    "Hello! Thank you for contacting our hotel concierge support. How can I assist you today with your stay or reservation?",
+    "I can certainly help you review your active 'Book at $0' holds and finalize your preferred reservation! To cross-check your bookings and locate your account details, could you please provide your full name and registered phone number?",
+    "Thank you for verifying your details! I have cross-checked your account and retrieved your 3 active 'Book at $0' holds:\n1. Motel Oracle (Payment Deadline: Oct 25)\n2. Grand Plaza Resort (Payment Deadline: Oct 26)\n3. Seaside Suites (Payment Deadline: Oct 27)\n\nWhich of these 3 properties would you like to finalize and pay for today? I can also safely release your remaining holds.",
+    "Understood! We will keep your 'Book at $0' hold active for Motel Oracle. You do not need to pay today—your payment deadline is October 25th. If total charges are not settled by October 25th, the system will automatically release the reservation with zero penalty. Would you like me to keep your other holds open or release them now?"
+  ],
+  tc_hotel_free_cancel_window: [
+    "Hello! Thank you for contacting our hotel concierge support. How can I assist you today with your stay or reservation?",
+    "Under this hotel's cancellation policy for Motel Oracle, free cancellation applies up to your specified deadline (e.g. up to tomorrow). Cancellations processed within this free window incur zero fees ($0 charge).",
+    "Your cancellation for Motel Oracle has been successfully confirmed. Since your cancellation was completed within the hotel's free cancellation period, your total charge is $0 with zero cancellation fees. A confirmation receipt has been sent to your registered contact details."
+  ],
+  tc_clinic_urgent: [
+    "Hello! Thank you for contacting our medical care coordination desk. How can I assist you with your appointment today?",
+    "I can help schedule an urgent consultation with Dr. Reed. To look up your patient file, could you please provide your full legal name, date of birth, and contact phone number?",
+    "Thank you, Arthur Pendelton. I have scheduled an urgent orthopedic consultation with Dr. Reed for tomorrow at 10:30 AM. Please note our 24-hour cancellation policy and bring your photo ID and insurance card.",
+    "You are very welcome, Arthur. We look forward to seeing you tomorrow. Take care!"
+  ],
+  tc_pet_groom: [
+    "Hello! Thank you for contacting pet care concierge support. How can I assist you and your pet today?",
+    "I would be happy to help book a full grooming package for Barnaby! Could you confirm whether his Rabies and Bordetella vaccinations are up to date, and note any special behavioral sensitivities?",
+    "Wonderful! Barnaby is officially scheduled for a Full Bath & Groom package this Friday at 9:00 AM, with special gentle care notes for his anxiety. Drop-off is between 8:30 and 9:00 AM, and we will text you when he is ready!"
+  ],
+  tc_bank_fraud_dispute: [
+    "Hello! Thank you for contacting our secure banking support desk. How can I assist you with your account today?",
+    "I take unauthorized transactions very seriously. I can immediately freeze your card ending in 4092 and open a dispute for the $450 charge. For security authentication, could you please state your full legal name and billing zip code?",
+    "Thank you for confirming your identity, Richard Vance. Your debit card ending in 4092 has been immediately locked to prevent further charges, and fraud dispute case #FD-8942 for $450 has been filed. A replacement card is being expedited, and provisional credit will post within 24 to 48 hours.",
+    "Your replacement card has been marked for priority express delivery (1-2 business days). Is there anything else I can secure for you today?"
+  ],
+  tc_tech_router_offline: [
+    "Hello! Thank you for calling telecom technical support. How can I help resolve your connectivity or equipment issue today?",
+    "A blinking red optical light on your FiberGateway X3 indicates an interruption in incoming fiber signal. Let's perform a quick non-destructive power cycle: please unplug the modem's power cable for 30 seconds, verify the green fiber jack is securely clicked in, and plug it back in.",
+    "Thank you for completing the power cycle. Since the optical indicator remains blinking red, this confirms a physical fiber signal disruption outside your home. I have scheduled an expedited field technician dispatch under ticket #TC-7710 for today between 2:00 PM and 5:00 PM.",
+    "Your technician window between 2:00 PM and 5:00 PM is confirmed. You will receive an SMS when the specialist is en route. Have a great day!"
   ]
 };

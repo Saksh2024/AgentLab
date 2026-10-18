@@ -12,6 +12,12 @@ analyzer_service = AnalyzerService()
     summary="Analyze a complete voice conversation transcript",
     description="Uses OpenAI Structured Outputs to identify failures, determine root causes, and rewrite the system prompt."
 )
+@router.post(
+    "/evaluate",
+    response_model=TranscriptAnalysisResponse,
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False
+)
 async def analyze_transcript(request: TranscriptAnalysisRequest):
     try:
         response = await analyzer_service.analyze(request)

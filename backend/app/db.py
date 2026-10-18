@@ -4,12 +4,32 @@ No external dependencies required — works with the standard library.
 """
 import sqlite3
 import logging
+import os
 from pathlib import Path
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Database file lives in the backend root
-DB_PATH = Path(__file__).parent.parent.parent / "agentlab.db"
+def _get_db_path() -> Path:
+    if settings.DATABASE_PATH:
+        p = Path(settings.DATABASE_PATH)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
+    env_path = os.getenv("DATABASE_PATH")
+    if env_path:
+        p = Path(env_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
+    repo_root_db = Path(__file__).parent.parent.parent / "agentlab.db"
+    backend_db = Path(__file__).parent.parent / "agentlab.db"
+    if repo_root_db.exists():
+        return repo_root_db
+    if repo_root_db.parent.exists() and os.access(repo_root_db.parent, os.W_OK):
+        return repo_root_db
+    return backend_db
+
+# Database file location
+DB_PATH = _get_db_path()
 
 
 def get_connection() -> sqlite3.Connection:

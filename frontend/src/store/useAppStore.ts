@@ -12,6 +12,9 @@ import {
   mockPromptVersions,
   mockTestCases,
   mockConversations,
+  DOMAINS_CONFIG,
+  detectDomainFromPrompt,
+  getDomainCustomerProfiles,
 } from '../services/mockDb';
 import { API_BASE } from '../config';
 
@@ -23,6 +26,7 @@ interface AppState {
   conversations: Conversation[];
   
   // Selection States
+  selectedDomainId: string;
   activePromptId: string;
   activeVersionId: string;
   activeTestCaseId: string;
@@ -33,6 +37,7 @@ interface AppState {
   isAgentTyping: boolean;
   
   // Actions
+  selectDomain: (domainId: string) => void;
   setActivePromptId: (id: string) => void;
   setActiveVersionId: (id: string) => void;
   setActiveTestCaseId: (id: string) => void;
@@ -62,16 +67,63 @@ export const useAppStore = create<AppState>((set, get) => ({
   testCases: mockTestCases,
   conversations: mockConversations,
   
+  selectedDomainId: 'hotel',
   activePromptId: mockPrompts[0]?.id || '',
-  activeVersionId: mockPromptVersions[mockPromptVersions.length - 1]?.id || '',
-  activeTestCaseId: mockTestCases[0]?.id || '',
+  activeVersionId: 'ver_v14',
+  activeTestCaseId: 'tc_hotel_book_at_zero',
   
   activeConversation: null,
   isSimulating: false,
   isAgentTyping: false,
   
+  selectDomain: (domainId: string) => {
+    const domain = DOMAINS_CONFIG.find(d => d.id === domainId);
+    if (!domain) {
+      set({ selectedDomainId: domainId });
+      return;
+    }
+    
+    const { versions, isSimulating } = get();
+    const matchingVersions = versions.filter(v => 
+      v.promptId === domain.promptId || 
+      detectDomainFromPrompt(v.systemPrompt, v.promptId) === domain.id
+    );
+    
+    const targetVer = matchingVersions[matchingVersions.length - 1] || 
+      versions.find(v => v.id === domain.defaultVersionId) || 
+      versions[0];
+      
+    const profiles = getDomainCustomerProfiles(targetVer?.systemPrompt, domainId);
+    const targetTestCaseId = profiles[0]?.id || domain.defaultTestCaseId;
+    
+    const updates: Partial<AppState> = {
+      selectedDomainId: domainId,
+      activePromptId: domain.promptId,
+      activeVersionId: targetVer?.id || '',
+      activeTestCaseId: targetTestCaseId
+    };
+    
+    if (isSimulating) {
+      updates.isSimulating = false;
+      updates.isAgentTyping = false;
+      updates.activeConversation = null;
+    }
+    
+    set(updates);
+  },
+
   setActivePromptId: (id) => set({ activePromptId: id }),
-  setActiveVersionId: (id) => set({ activeVersionId: id }),
+  setActiveVersionId: (id) => {
+    const { versions } = get();
+    const ver = versions.find(v => v.id === id);
+    const domainId = detectDomainFromPrompt(ver?.systemPrompt, ver?.promptId);
+    const profiles = getDomainCustomerProfiles(ver?.systemPrompt, domainId);
+    set({
+      activeVersionId: id,
+      selectedDomainId: domainId,
+      activeTestCaseId: profiles[0]?.id || get().activeTestCaseId
+    });
+  },
   setActiveTestCaseId: (id) => set({ activeTestCaseId: id }),
   
   createNewPromptVersion: (systemPrompt, constraints, flow, changeDesc) => {
@@ -188,6 +240,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         defaultGreeting = "Hello! Thank you for contacting our medical care coordination desk. How can I assist you with your appointment today?";
       } else if (sysLower.includes("pet") || sysLower.includes("grooming") || sysLower.includes("vet")) {
         defaultGreeting = "Hello! Thank you for contacting pet care concierge support. How can I assist you and your pet today?";
+      } else if (sysLower.includes("bank") || sysLower.includes("card") || sysLower.includes("fraud") || sysLower.includes("account")) {
+        defaultGreeting = "Hello! Thank you for contacting our secure banking support desk. How can I assist you with your account today?";
+      } else if (sysLower.includes("telecom") || sysLower.includes("tech") || sysLower.includes("router") || sysLower.includes("wifi") || sysLower.includes("internet") || sysLower.includes("modem")) {
+        defaultGreeting = "Hello! Thank you for calling telecom technical support. How can I help resolve your connectivity or equipment issue today?";
       }
 
       const fallbackMsg: Message = {

@@ -78,9 +78,10 @@
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/prompts/generate` | Generates system instructions, dialogue pipeline, and edge cases. |
 | `POST` | `/api/v1/simulator/chat` | Processes a turn in the simulator and returns the voice agent response. |
-| `POST` | `/api/v1/analyzer/evaluate` | Evaluates a transcript for failure modes and returns an improved prompt. |
+| `POST` | `/api/v1/analyzer/analyze` (or `/evaluate`) | Evaluates a transcript for failure modes and returns an improved prompt. |
 | `GET` | `/api/v1/versions/` | Fetches all prompt versions from SQLite database. |
 | `POST` | `/api/v1/versions/` | Persists a new prompt version to SQLite database. |
+| `GET` | `/api/v1/versions/{id}/diff` | Computes structured line-by-line diff for a prompt version. |
 | `GET` | `/health` | Health check endpoint returning backend status. |
 
 ---

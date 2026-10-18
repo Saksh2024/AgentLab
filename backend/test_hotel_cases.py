@@ -8,7 +8,8 @@ async def run_hotel_suite_tests():
     print("AGENTLAB - SIMULATION SUITE FOR HOTEL STAY & BOOKING SUPPORT USE CASE (v13)")
     print("=" * 80)
     
-    client = OpenAIClient()
+    use_live = "--live" in sys.argv
+    client = OpenAIClient(api_key="" if not use_live else None)
     
     # Target system prompt for Hotel Concierge / Travel App (Version v13)
     system_prompt = (

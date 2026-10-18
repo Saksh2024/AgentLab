@@ -13,5 +13,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gemini-3.5-flash"
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "AI Voice Agent Studio API"
+    DATABASE_PATH: Optional[str] = None
+    ALLOWED_ORIGINS: str = "*"
 
 settings = Settings()
