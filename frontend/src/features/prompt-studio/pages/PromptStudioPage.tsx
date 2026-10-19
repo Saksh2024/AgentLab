@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAppStore } from '../../../store/useAppStore';
@@ -35,6 +35,7 @@ export const PromptStudioPage: React.FC = () => {
   const navigate = useNavigate();
   const { 
     versions, 
+    activeVersionId,
     selectedDomainId, 
     selectDomain, 
     createNewPromptVersion, 
@@ -59,8 +60,19 @@ export const PromptStudioPage: React.FC = () => {
   const [systemPromptEdit, setSystemPromptEdit] = useState('');
   const [changeNote, setChangeNote] = useState('Evolved via studio compiler.');
   const [apiError, setApiError] = useState<string | null>(null);
+  const [registryFilter, setRegistryFilter] = useState<'domain' | 'all'>('domain');
 
-  // Sync form and preview when selectedDomainId changes or on initial mount
+  // Filter versions specifically matching the selected domain
+  const domainVersions = useMemo(() => {
+    return versions.filter(v => {
+      const domId = detectDomainFromPrompt(v.systemPrompt, v.promptId);
+      return domId === selectedDomainId || v.promptId === currentDomain.promptId;
+    });
+  }, [versions, selectedDomainId, currentDomain.promptId]);
+
+  const displayedRegistryVersions = registryFilter === 'domain' ? domainVersions : versions;
+
+  // Sync form, compiler preview, and registry selection when selectedDomainId changes or on initial mount
   useEffect(() => {
     const domain = DOMAINS_CONFIG.find(d => d.id === selectedDomainId) || DOMAINS_CONFIG[0];
     setValue('useCase', domain.useCase);
@@ -76,6 +88,9 @@ export const PromptStudioPage: React.FC = () => {
       versions[0];
 
     if (targetVer) {
+      if (activeVersionId !== targetVer.id) {
+        setActiveVersionId(targetVer.id);
+      }
       setGeneratedData({
         systemPrompt: targetVer.systemPrompt,
         conversationFlow: targetVer.conversationFlow || [
@@ -97,7 +112,45 @@ export const PromptStudioPage: React.FC = () => {
     if (domainId === 'custom') {
       return;
     }
+    // Auto-scope registry to newly selected domain
+    setRegistryFilter('domain');
     selectDomain(domainId);
+  };
+
+  const handleSelectRegistryVersion = (v: any) => {
+    const domId = detectDomainFromPrompt(v.systemPrompt, v.promptId);
+    const domObj = DOMAINS_CONFIG.find(d => d.id === domId);
+
+    // Auto-load version into active store
+    setActiveVersionId(v.id);
+    
+    // Auto-load domain into studio
+    if (domId && domId !== selectedDomainId) {
+      selectDomain(domId);
+    }
+    
+    // Auto-load form inputs
+    if (domObj) {
+      setValue('useCase', domObj.useCase);
+      setValue('language', domObj.language);
+      setValue('tone', domObj.tone);
+    }
+    
+    // Auto-load editor and compiler output
+    setSystemPromptEdit(v.systemPrompt);
+    setChangeNote(v.changeDescription || `Loaded version v${v.versionNumber}`);
+    setGeneratedData({
+      systemPrompt: v.systemPrompt,
+      conversationFlow: v.conversationFlow || [
+        `1. Warm greeting and customer intent discovery`,
+        `2. Identify domain context and policy validation`,
+        `3. Provide accurate guidance within 2-3 sentences`,
+        `4. Hospitable resolution confirmation`
+      ],
+      edgeCases: v.edgeCases || [
+        { scenario: 'Missing primary code', behavior: 'Execute fallback verification using registered name & phone.' }
+      ]
+    });
   };
 
   // Form submit: Calls POST /api/v1/prompts/generate
@@ -352,47 +405,89 @@ export const PromptStudioPage: React.FC = () => {
 
         {/* Existing Versions Summary */}
         <div className="p-4 border border-zinc-850 rounded-xl bg-zinc-950/40 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5 shrink-0">
               <FileCode className="w-3.5 h-3.5 text-indigo-400" />
               Prompt Version Registry
             </span>
-            <span className="text-[10px] font-mono text-zinc-500">{versions.length} versions in SQLite</span>
+            <div className="flex items-center gap-1 bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setRegistryFilter('domain')}
+                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all cursor-pointer ${
+                  registryFilter === 'domain'
+                    ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                title={`Filter registry to ${currentDomain.name}`}
+              >
+                {currentDomain.emoji} {currentDomain.shortName} ({domainVersions.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setRegistryFilter('all')}
+                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all cursor-pointer ${
+                  registryFilter === 'all'
+                    ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                title="Show all versions across all domains"
+              >
+                All ({versions.length})
+              </button>
+            </div>
           </div>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {versions.slice().reverse().map(v => {
-              const domId = detectDomainFromPrompt(v.systemPrompt, v.promptId);
-              const domObj = DOMAINS_CONFIG.find(d => d.id === domId);
-              return (
-                <div 
-                  key={v.id} 
-                  onClick={() => {
-                    setActiveVersionId(v.id);
-                    setSystemPromptEdit(v.systemPrompt);
-                    setChangeNote(v.changeDescription);
-                    setGeneratedData({
-                      systemPrompt: v.systemPrompt,
-                      conversationFlow: v.conversationFlow || [],
-                      edgeCases: v.edgeCases || []
-                    });
-                  }}
-                  className="p-2.5 rounded-lg border border-zinc-850/80 bg-zinc-900/40 hover:bg-zinc-850/70 hover:border-zinc-700 transition-all text-xs flex items-center justify-between cursor-pointer group"
-                >
-                  <div className="min-w-0 flex-1 pr-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-zinc-200 group-hover:text-white">v{v.versionNumber}</span>
-                      {domObj && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-750">
-                          {domObj.emoji} {domObj.shortName}
+
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {displayedRegistryVersions.length === 0 ? (
+              <div className="p-4 rounded-lg border border-dashed border-zinc-800 text-center space-y-1.5 bg-zinc-950/20">
+                <p className="text-xs text-zinc-300 font-medium">No saved versions for {currentDomain.name} yet</p>
+                <p className="text-[10px] text-zinc-500 leading-relaxed">
+                  The default compiled baseline prompt is auto-loaded in the editor. Click <strong>"Commit to Prompt Registry"</strong> to register new versions into SQLite.
+                </p>
+              </div>
+            ) : (
+              displayedRegistryVersions.slice().reverse().map(v => {
+                const domId = detectDomainFromPrompt(v.systemPrompt, v.promptId);
+                const domObj = DOMAINS_CONFIG.find(d => d.id === domId);
+                const isActive = v.id === activeVersionId || v.systemPrompt === systemPromptEdit;
+
+                return (
+                  <div 
+                    key={v.id} 
+                    onClick={() => handleSelectRegistryVersion(v)}
+                    className={`p-2.5 rounded-lg border transition-all text-xs flex items-center justify-between cursor-pointer group ${
+                      isActive 
+                        ? 'border-indigo-500/60 bg-indigo-500/10 shadow-sm ring-1 ring-indigo-500/30' 
+                        : 'border-zinc-850/80 bg-zinc-900/40 hover:bg-zinc-850/70 hover:border-zinc-700'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-semibold ${isActive ? 'text-indigo-300 font-bold' : 'text-zinc-200 group-hover:text-white'}`}>
+                          v{v.versionNumber}
                         </span>
-                      )}
+                        {domObj && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-750">
+                            {domObj.emoji} {domObj.shortName}
+                          </span>
+                        )}
+                        {isActive && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Auto-Loaded
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-zinc-500 truncate mt-0.5">{v.changeDescription}</p>
                     </div>
-                    <p className="text-[10px] text-zinc-500 truncate mt-0.5">{v.changeDescription}</p>
+                    <span className="text-[9px] font-mono text-zinc-600 shrink-0">
+                      {new Date(v.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                  <span className="text-[9px] font-mono text-zinc-600 shrink-0">{new Date(v.createdAt).toLocaleDateString()}</span>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

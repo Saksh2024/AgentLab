@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { API_BASE } from '../../../config';
 import { useAppStore } from '../../../store/useAppStore';
+import { DOMAINS_CONFIG, detectDomainFromPrompt } from '../../../services/mockDb';
 
 interface Version {
   id: number;
@@ -172,7 +173,7 @@ const DiffLine: React.FC<{ chunk: DiffChunk; index: number }> = ({ chunk, index 
 
 export const PromptEvolutionPage: React.FC = () => {
   const navigate = useNavigate();
-  const { activeVersionId, setActiveVersionId, fetchVersions: storeFetchVersions } = useAppStore();
+  const { activeVersionId, setActiveVersionId, selectedDomainId, selectDomain, fetchVersions: storeFetchVersions } = useAppStore();
 
   const [versions, setVersions] = useState<Version[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -183,6 +184,7 @@ export const PromptEvolutionPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'unified' | 'split'>('unified');
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [domainFilter, setDomainFilter] = useState<string>(selectedDomainId || 'all');
   const [showPurposeGuide, setShowPurposeGuide] = useState(true);
 
   // Form for manually saving a new version
@@ -320,15 +322,22 @@ export const PromptEvolutionPage: React.FC = () => {
   const modifiedCount = diff?.diff.filter(c => c.tag === 'modified').length ?? 0;
   const equalCount = diff?.diff.filter(c => c.tag === 'equal').length ?? 0;
 
-  // Search filtered versions
+  // Search & domain filtered versions
   const filteredVersions = useMemo(() => {
-    if (!searchQuery.trim()) return versions;
+    let result = versions;
+    if (domainFilter !== 'all') {
+      result = result.filter(v => {
+        const dId = detectDomainFromPrompt(v.improved_prompt || v.previous_prompt);
+        return dId === domainFilter;
+      });
+    }
+    if (!searchQuery.trim()) return result;
     const q = searchQuery.toLowerCase();
-    return versions.filter(v =>
+    return result.filter(v =>
       `v${v.version_number}`.includes(q) ||
       (v.summary_of_changes && v.summary_of_changes.toLowerCase().includes(q))
     );
-  }, [versions, searchQuery]);
+  }, [versions, domainFilter, searchQuery]);
 
   // Derive human-friendly purpose context
   const getContextualImpact = (summary: string) => {
@@ -398,6 +407,34 @@ export const PromptEvolutionPage: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Domain Quick Filters */}
+          <div className="px-3 py-2 border-b border-[#1f1f23] bg-[#0c0c0e] flex items-center gap-1.5 overflow-x-auto">
+            <button
+              onClick={() => setDomainFilter('all')}
+              className={`px-2 py-0.5 rounded text-[10px] whitespace-nowrap font-medium transition-all cursor-pointer ${
+                domainFilter === 'all'
+                  ? 'bg-indigo-600 text-white font-semibold'
+                  : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+              }`}
+            >
+              All Domains
+            </button>
+            {DOMAINS_CONFIG.map(d => (
+              <button
+                key={d.id}
+                onClick={() => setDomainFilter(d.id)}
+                className={`px-2 py-0.5 rounded text-[10px] whitespace-nowrap font-medium transition-all flex items-center gap-1 cursor-pointer ${
+                  domainFilter === d.id
+                    ? 'bg-indigo-600 text-white font-semibold'
+                    : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                }`}
+              >
+                <span>{d.emoji}</span>
+                <span>{d.shortName}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Add-version Form (Collapsible) */}
@@ -463,11 +500,18 @@ export const PromptEvolutionPage: React.FC = () => {
               const isSelected = selectedId === v.id;
               const isActive = activeVersionId === `ver_v${v.version_number}`;
               const isLatest = i === 0;
+              const domId = detectDomainFromPrompt(v.improved_prompt || v.previous_prompt);
+              const domObj = DOMAINS_CONFIG.find(d => d.id === domId);
 
               return (
                 <button
                   key={v.id}
-                  onClick={() => setSelectedId(v.id)}
+                  onClick={() => {
+                    setSelectedId(v.id);
+                    if (domObj) {
+                      selectDomain(domObj.id);
+                    }
+                  }}
                   className={`w-full text-left rounded-xl p-3 transition-all border relative flex items-start gap-2.5 cursor-pointer ${
                     isSelected
                       ? 'bg-indigo-600/10 border-indigo-500/60 shadow-md shadow-indigo-600/5'
@@ -489,6 +533,12 @@ export const PromptEvolutionPage: React.FC = () => {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-xs font-bold text-zinc-100">Version {v.version_number}</span>
                       
+                      {domObj && (
+                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-750">
+                          {domObj.emoji} {domObj.shortName}
+                        </span>
+                      )}
+
                       {isActive && (
                         <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
