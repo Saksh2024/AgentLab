@@ -1,0 +1,39 @@
+# Local/demo stack:  docker compose up --build   ->  http://localhost:8080
+# Optional: copy .env.example to .env (repo root) to set OPENAI_API_KEY, API_KEY, etc.
+services:
+  backend:
+    build: ./backend
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://generativelanguage.googleapis.com/v1beta/openai/}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gemini-2.5-flash}
+      API_KEY: ${API_KEY:-}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
+      # Safe here: only the nginx container can reach the backend (no published port),
+      # and nginx sets X-Forwarded-For.
+      TRUST_PROXY_HEADERS: "true"
+      # Same-origin through nginx, so CORS isn't exercised; keep it tight anyway.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080}
+    volumes:
+      - agentlab-data:/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api/v1
+    environment:
+      BACKEND_URL: http://backend:8000
+      API_KEY: ${API_KEY:-}
+    ports:
+      - "8080:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  agentlab-data:

@@ -21,7 +21,7 @@ import {
   FileCode,
   X
 } from 'lucide-react';
-import { API_BASE } from '../../../config';
+import { API_BASE, apiFetch } from '../../../config';
 import { useAppStore } from '../../../store/useAppStore';
 import { DOMAINS_CONFIG, detectDomainFromPrompt } from '../../../services/mockDb';
 
@@ -198,7 +198,7 @@ export const PromptEvolutionPage: React.FC = () => {
     setIsLoadingVersions(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/versions/`);
+      const res = await apiFetch(`${API_BASE}/versions/`);
       if (!res.ok) throw new Error(`Failed to load versions (${res.status})`);
       const data: Version[] = await res.json();
       setVersions(data);
@@ -223,7 +223,7 @@ export const PromptEvolutionPage: React.FC = () => {
     setIsLoadingDiff(true);
     setDiff(null);
     try {
-      const res = await fetch(`${API_BASE}/versions/${id}/diff`);
+      const res = await apiFetch(`${API_BASE}/versions/${id}/diff`);
       if (!res.ok) throw new Error(`Failed to load diff (${res.status})`);
       const data: DiffResult = await res.json();
       setDiff(data);
@@ -258,7 +258,7 @@ export const PromptEvolutionPage: React.FC = () => {
     if (!formPrev.trim() || !formImproved.trim() || !formSummary.trim()) return;
     setIsSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/versions/`, {
+      const res = await apiFetch(`${API_BASE}/versions/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -100,3 +100,26 @@
    npm run dev
    ```
    * App UI available at: `http://localhost:5173/`
+
+### Docker (alternative)
+
+```bash
+cp .env.example .env        # optional: set OPENAI_API_KEY / API_KEY
+docker compose up --build   # UI + API proxy at http://localhost:8080
+```
+The SQLite file lives in the `agentlab-data` volume. nginx serves the SPA and proxies `/api/` to the backend, so no CORS setup is needed.
+
+### Security settings (backend env vars)
+
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `API_KEY` | unset | When set, API routes require an `X-API-Key` header (`/health` stays public). |
+| `RATE_LIMIT_PER_MINUTE` | `60` | Per-client limit on API routes; `0` disables. |
+| `TRUST_PROXY_HEADERS` | `false` | Use `X-Forwarded-For` for client IP; enable only behind a trusted proxy. |
+| `ALLOWED_ORIGINS` | `*` | Comma-separated CORS origins; restrict outside local dev. |
+
+### Tests
+```bash
+cd backend && pip install -r requirements-dev.txt && python -m pytest -q
+```
+
