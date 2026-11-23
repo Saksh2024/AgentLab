@@ -21,7 +21,12 @@ services:
       - key: API_V1_STR
         value: /api/v1
       - key: ALLOWED_ORIGINS
-        value: "*"
+        value: "*"   # TODO: set to your frontend URL, e.g. https://agentlab-frontend.onrender.com
+      # Render sits behind a proxy: without this every visitor shares one rate-limit bucket
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "60"
       - key: DATABASE_PATH
         value: /opt/render/project/src/backend/agentlab.db
 

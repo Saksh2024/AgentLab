@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   Play
 } from 'lucide-react';
-import { API_BASE } from '../../../config';
+import { API_BASE, apiFetch } from '../../../config';
 
 interface PromptInputs {
   useCase: string;
@@ -160,7 +160,7 @@ export const PromptStudioPage: React.FC = () => {
     setApiError(null);
     
     try {
-      const response = await fetch(`${API_BASE}/prompts/generate`, {
+      const response = await apiFetch(`${API_BASE}/prompts/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

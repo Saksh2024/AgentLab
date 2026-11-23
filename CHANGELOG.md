@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2026-11-09
+
+### Added
+* **Containerization**: `backend/Dockerfile` (python:3.11-slim, non-root user, healthcheck, SQLite on a `/data` volume, honours `$PORT`), `frontend/Dockerfile` (Node build, then unprivileged nginx with SPA fallback, asset caching and a `/api/` reverse proxy), `.dockerignore` files, and a root `docker-compose.yml` (`docker compose up --build` -> http://localhost:8080).
+* **CI** (`.github/workflows/ci.yml`): backend pytest, frontend typecheck/lint/build, and a Docker compose smoke test through the nginx proxy.
+* **Hardening**: optional `API_KEY` (`X-API-Key` header, constant-time compare), in-memory per-client rate limiting (`RATE_LIMIT_PER_MINUTE`, default 60, `TRUST_PROXY_HEADERS`), startup warnings for open CORS / no key, and `test_security.py` (6 tests).
+* Frontend `apiFetch()` helper that attaches `VITE_API_KEY` when set.
+
+### Changed
+* Backend dependencies pinned; added `requirements-dev.txt` and `pytest.ini`.
+* Replaced deprecated `@app.on_event("startup")` with a lifespan handler.
+* `render.yaml`: `TRUST_PROXY_HEADERS` and `RATE_LIMIT_PER_MINUTE` set for the backend.
+
+### Notes
+* The API key and rate limiter are demo-grade. A `VITE_API_KEY` is visible in the browser bundle (the compose setup avoids this by having nginx inject the key). The rate limiter is per-process memory.
+* SQLite on Render's free tier is still ephemeral; the Docker volume persists locally only.
+
+---
+
 ## [1.4.0] - 2026-10-15
 
 ### Added

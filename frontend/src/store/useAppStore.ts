@@ -16,7 +16,7 @@ import {
   detectDomainFromPrompt,
   getDomainCustomerProfiles,
 } from '../services/mockDb';
-import { API_BASE } from '../config';
+import { API_BASE, apiFetch } from '../config';
 
 
 interface AppState {
@@ -198,7 +198,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const systemPrompt = activeVer ? activeVer.systemPrompt : "You are an AI customer support agent for hotel concierge support. Warmly greet the customer and ask how you can assist with their reservation.";
 
     // Trigger initial agent greeting dynamically matching system prompt domain
-    fetch(`${API_BASE}/simulator/chat`, {
+    apiFetch(`${API_BASE}/simulator/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -324,7 +324,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const systemPrompt = activeVer ? activeVer.systemPrompt : "You are a customer support agent for SwiftAir.";
 
     // Call actual uvicorn backend for live agent simulation
-    fetch(`${API_BASE}/simulator/chat`, {
+    apiFetch(`${API_BASE}/simulator/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -568,7 +568,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   fetchVersions: async () => {
     try {
-      const res = await fetch(`${API_BASE}/versions/`);
+      const res = await apiFetch(`${API_BASE}/versions/`);
       if (res.ok) {
         const data = await res.json();
         // Map backend Version to frontend PromptVersion
@@ -644,7 +644,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   saveEvolvedVersion: async (previousPrompt: string, improvedPrompt: string, summary: string) => {
     try {
-      const res = await fetch(`${API_BASE}/versions/`, {
+      const res = await apiFetch(`${API_BASE}/versions/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -16,7 +16,7 @@ import {
   ChevronRight,
   FileText
 } from 'lucide-react';
-import { API_BASE } from '../../../config';
+import { API_BASE, apiFetch } from '../../../config';
 import type { AnalysisReport } from '../../../services/mockDb';
 
 interface IdentifiedFailure {
@@ -90,7 +90,7 @@ export const AnalyzerPage: React.FC = () => {
         }));
       }
 
-      const res = await fetch(`${API_BASE}/analyzer/analyze`, {
+      const res = await apiFetch(`${API_BASE}/analyzer/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

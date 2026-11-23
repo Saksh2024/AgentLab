@@ -15,5 +15,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AI Voice Agent Studio API"
     DATABASE_PATH: Optional[str] = None
     ALLOWED_ORIGINS: str = "*"
+    # Optional shared secret; when set, API routes require an `X-API-Key` header.
+    API_KEY: Optional[str] = None
+    # Requests per client per minute on API routes (0 disables rate limiting).
+    RATE_LIMIT_PER_MINUTE: int = 60
+    # Honour X-Forwarded-For for client IPs (enable only behind a trusted proxy).
+    TRUST_PROXY_HEADERS: bool = False
 
 settings = Settings()
