@@ -628,9 +628,17 @@ export const useAppStore = create<AppState>((set, get) => ({
         merged.sort((a, b) => a.versionNumber - b.versionNumber);
         
         set({ versions: merged });
-        if (merged.length > 0) {
-          const latest = merged[merged.length - 1];
-          set({ activeVersionId: latest.id });
+
+        // Keep the user's current selection. Previously this always jumped to the highest-numbered
+        // version overall (v60, the Telecom prompt), so the Hotel domain/persona ran the telecom prompt.
+        // Only re-pick if the current version no longer exists: the newest one in the selected domain.
+        const { activeVersionId, selectedDomainId } = get();
+        if (!merged.some(v => v.id === activeVersionId) && merged.length > 0) {
+          const inDomain = merged.filter(
+            v => detectDomainFromPrompt(v.systemPrompt, v.promptId) === selectedDomainId
+          );
+          const fallback = inDomain[inDomain.length - 1] ?? merged[merged.length - 1];
+          set({ activeVersionId: fallback.id });
         }
       }
     } catch (err) {
