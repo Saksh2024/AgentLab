@@ -18,6 +18,7 @@ import {
 } from '../services/mockDb';
 import { API_BASE, apiFetch } from '../config';
 
+export type SimulatorMode = 'unknown' | 'live' | 'offline' | 'fallback' | 'unreachable';
 
 interface AppState {
   prompts: Prompt[];
@@ -35,7 +36,10 @@ interface AppState {
   activeConversation: Conversation | null;
   isSimulating: boolean;
   isAgentTyping: boolean;
-  
+  // Where the latest simulator reply came from (see ChatSimulationResponse.mode on the backend).
+  // 'unreachable' = the API call itself failed and a static client-side reply was shown.
+  simulatorMode: SimulatorMode;
+
   // Actions
   selectDomain: (domainId: string) => void;
   setActivePromptId: (id: string) => void;
@@ -75,6 +79,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeConversation: null,
   isSimulating: false,
   isAgentTyping: false,
+  simulatorMode: 'unknown',
   
   selectDomain: (domainId: string) => {
     const domain = DOMAINS_CONFIG.find(d => d.id === domainId);
@@ -192,6 +197,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeConversation: initialConv,
       isSimulating: true,
       isAgentTyping: true,
+      simulatorMode: 'unknown',
     });
 
     const activeVer = get().versions.find(v => v.id === versionId);
@@ -211,7 +217,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (!res.ok) throw new Error('API failed');
       return res.json();
     })
-    .then((data: { response: string }) => {
+    .then((data: { response: string; mode?: SimulatorMode }) => {
+      set({ simulatorMode: data.mode ?? 'unknown' });
       const agentMsg: Message = {
         id: `msg_agent_init_${Date.now()}`,
         sender: 'agent',
@@ -230,6 +237,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
     })
     .catch(() => {
+      set({ simulatorMode: 'unreachable' });
       const sysLower = systemPrompt.toLowerCase();
       let defaultGreeting = "Hello! Thank you for contacting customer support. How can I assist you today?";
       if (sysLower.includes("hotel") || sysLower.includes("motel") || sysLower.includes("stay") || sysLower.includes("resort") || sysLower.includes("check-in")) {
@@ -337,7 +345,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (!res.ok) throw new Error(`HTTP error ${res.status}`);
       return res.json();
     })
-    .then((data: { response: string }) => {
+    .then((data: { response: string; mode?: SimulatorMode }) => {
+      set({ simulatorMode: data.mode ?? 'unknown' });
       const agentMsg: Message = {
         id: `msg_agent_${Date.now()}`,
         sender: 'agent',
@@ -357,6 +366,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
     .catch(err => {
       console.warn('Backend simulator API error, using static fallback message:', err);
+      set({ simulatorMode: 'unreachable' });
       
       const lowerText = text.toLowerCase().trim();
       const messages = activeConversation.messages || [];

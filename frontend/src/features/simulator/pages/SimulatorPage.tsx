@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../../store/useAppStore';
+import { SimulatorModeBadge } from '../../../components/ui/SimulatorModeBadge';
 import { 
   DOMAINS_CONFIG, 
   detectDomainFromPrompt, 
@@ -43,6 +44,7 @@ export const SimulatorPage: React.FC = () => {
     activeConversation,
     isSimulating,
     isAgentTyping,
+    simulatorMode,
     setActiveVersionId,
     setActiveTestCaseId,
     startSimulation,
@@ -260,10 +262,14 @@ export const SimulatorPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-zinc-200">Session Workspace</span>
             {isSimulating && (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                Websocket Open
-              </span>
+              simulatorMode === 'unknown' ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-mono font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/25">
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-pulse"></span>
+                  Connecting...
+                </span>
+              ) : (
+                <SimulatorModeBadge mode={simulatorMode} />
+              )
             )}
           </div>
           <div className="flex items-center gap-3">

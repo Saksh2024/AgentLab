@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Literal
 
 class Message(BaseModel):
     role: str = Field(..., description="The role of the message sender, e.g., 'user', 'assistant', 'system'")
@@ -12,3 +12,8 @@ class ChatSimulationRequest(BaseModel):
 
 class ChatSimulationResponse(BaseModel):
     response: str = Field(..., description="The generated assistant reply")
+    mode: Literal["live", "offline", "fallback"] = Field(
+        default="live",
+        description="live = answered by the LLM; offline = no API key configured (scripted replies); "
+                    "fallback = LLM call failed so a scripted reply was used",
+    )
