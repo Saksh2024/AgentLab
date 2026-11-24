@@ -14,14 +14,14 @@ class SimulatorService:
         client = self.llm_client or OpenAIClient()
         
         try:
-            response_text = await client.simulate_chat_turn(
+            response_text, mode = await client.simulate_chat_turn_with_mode(
                 system_prompt=request.system_prompt,
                 history=request.history,
                 latest_message=request.latest_message
             )
-            
-            logger.info("Successfully generated simulator response.")
-            return ChatSimulationResponse(response=response_text)
+
+            logger.info(f"Successfully generated simulator response (mode={mode}).")
+            return ChatSimulationResponse(response=response_text, mode=mode)
             
         except Exception as exc:
             logger.error(f"Failed to generate simulation response: {str(exc)}")

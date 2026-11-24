@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '../../store/useAppStore';
+import { SimulatorModeBadge } from '../ui/SimulatorModeBadge';
 import {
   LayoutDashboard,
   Terminal,
@@ -19,7 +20,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const profile = 'Senior Solutions Eng';
-  const { fetchVersions } = useAppStore();
+  const { fetchVersions, simulatorMode } = useAppStore();
 
   useEffect(() => {
     fetchVersions();
@@ -93,15 +94,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-[#1f1f23] bg-[#0c0c0e]">
           <div className="flex items-center gap-2 mb-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Local Mock Sandbox</span>
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Simulator</span>
+            {simulatorMode === 'unknown' ? (
+              <span className="text-[10px] font-mono text-zinc-600">idle</span>
+            ) : (
+              <SimulatorModeBadge mode={simulatorMode} />
+            )}
           </div>
           <p className="text-[10px] text-zinc-600 font-mono leading-relaxed">
-            FastAPI: Simulated<br />
-            SQLite: Mock Session Storage
+            Shows whether the last reply came from the live LLM or from scripted offline replies.
           </p>
         </div>
       </aside>

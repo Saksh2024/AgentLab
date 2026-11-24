@@ -20,9 +20,12 @@ logger = logging.getLogger(__name__)
 
 class OpenAIClient:
     def __init__(self, api_key: str = None, base_url: str = None):
-        self.api_key = api_key if api_key is not None else settings.OPENAI_API_KEY
-        self.base_url = base_url or settings.OPENAI_BASE_URL
-        self.model = settings.OPENAI_MODEL or "gemini-3.5-flash"
+        # Strip whitespace: a trailing newline/space pasted into a hosting dashboard makes the HTTP client
+        # reject the Authorization header and surfaces only as a vague "Connection error."
+        raw_key = api_key if api_key is not None else settings.OPENAI_API_KEY
+        self.api_key = raw_key.strip() if isinstance(raw_key, str) else raw_key
+        self.base_url = (base_url or settings.OPENAI_BASE_URL or "").strip() or None
+        self.model = (settings.OPENAI_MODEL or "").strip() or "gemini-3.5-flash"
         
         # If key is missing or default placeholder, mark as unconfigured
         if not self.api_key or self.api_key in ("your_openai_api_key_here", "sk-...", "", "offline"):
@@ -432,6 +435,13 @@ class OpenAIClient:
         return PromptGenerationResponse(system_prompt=system_prompt, conversation_flow=flow, edge_cases=edge_cases)
 
     async def simulate_chat_turn(self, system_prompt: str, history: list, latest_message: str) -> str:
+        text, _mode = await self.simulate_chat_turn_with_mode(system_prompt, history, latest_message)
+        return text
+
+    async def simulate_chat_turn_with_mode(self, system_prompt: str, history: list, latest_message: str) -> tuple[str, str]:
+        """Return (reply, mode). mode is "live" (LLM answered), "offline" (no API key configured)
+        or "fallback" (LLM configured but the call failed, so the scripted heuristic answered)."""
+        mode = "offline"
         if self.is_configured and self.client:
             try:
                 messages = [{"role": "system", "content": system_prompt}]
@@ -450,10 +460,14 @@ class OpenAIClient:
                     temperature=0.7,
                     max_tokens=250,
                 )
-                return completion.choices[0].message.content
+                return completion.choices[0].message.content, "live"
             except Exception as exc:
-                logger.warning(f"Live simulation turn failed ({exc}), falling back to heuristic dialog simulation.")
+                mode = "fallback"
+                logger.warning(f"Live simulation turn failed ({exc!r}, base_url={self.base_url or 'default'}), falling back to heuristic dialog simulation.")
 
+        return self._heuristic_chat_turn(system_prompt, history, latest_message), mode
+
+    def _heuristic_chat_turn(self, system_prompt: str, history: list, latest_message: str) -> str:
         # Heuristic conversational simulator turn fallback
         lower_msg = latest_message.lower().strip()
         sys_lower = (system_prompt or "").lower()
